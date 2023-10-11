@@ -1,25 +1,45 @@
 const express = require('express');
-const ejs = require("ejs");
-const url = require("url");
+const url = require('url');
+const { v4: uuidv4 } = require('uuid');
+const database = require('./utilsMySQL.js');
 const app = express();
 const port = 3000;
-const fs = require('fs/promises');
-const multer = require('multer');
-const { v4: uuidv4 } = require('uuid');
 
-const storage = multer.memoryStorage();
-const upload = multer({
-    storage: storage,
-    limits: { fileSize: 1024 * 1024 } // Tamaño máximo en bytes (1 MB en este ejemplo)
+// Crear i configurar l'objecte de la base de dades
+var db = new database();
+db.init({
+    host: "localhost",
+    port: 3306,
+    user: "root",
+    password: "pwd",
+    database: "Pr42"
 });
 
-app.set('view engine', 'ejs');
+// Publicar arxius carpeta ‘public’
 app.use(express.static('public'));
 
-// cosas
+// Configurar per rebre dades POST en format JSON
+app.use(express.json);
+
+// Configurar direcció '/testDB'
+app.get('/testDB', testDB)
+async function testDB (req, res) {
+    let rst = await db.query('SELECT * FROM city LIMIT 10')
+    res.send(rst)
+}
 
 // Activar el servidor
 const httpServer = app.listen(port, appListen)
 function appListen () {
     console.log(`Example app listening on: http://localhost:${port}`)
+}
+
+// Close connections when process is killed
+process.on('SIGTERM', shutDown);
+process.on('SIGINT', shutDown);
+function shutDown() {
+    console.log('Shutting down gracefully');
+    httpServer.close();
+    db.end();
+    process.exit(0);
 }
