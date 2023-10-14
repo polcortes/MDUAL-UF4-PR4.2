@@ -1,23 +1,22 @@
 {
-  "name": "practica2",
+  "name": "ajax",
   "version": "1.0.0",
   "description": "",
-  "main": "main.js",
+  "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon ./app.js",
-    "app": "forever ./app.js",
+    "test": "echo \"Error: no test\" && exit 1",
+    "dev": "nodemon ./app.js  --ext js,html,css",
+    "app": "pm2 start ./app.js",
     "pm2List": "pm2 list",
     "pm2Delete": "pm2 delete app"
   },
-  "author": "Erik Tamaño i Pol Cortés",
-  "license": "ISC",
+  "author": "",
+  "license": "",
   "dependencies": {
-    "ejs": "^3.1.9",
     "express": "^4.18.2",
-    "forever": "^4.0.3",
     "mysql2": "^3.6.1",
     "nodemon": "^3.0.1",
-    "pm2": "^5.3.0"
+    "pm2": "^5.3.0",
+    "uuid": "^9.0.1"
   }
 }
