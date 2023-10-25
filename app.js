@@ -4,6 +4,7 @@ const url = require('url')
 const { v4: uuidv4 } = require('uuid')
 const database = require('./utilsMySQL.js')
 const shadowsObj = require('./utilsShadows.js')
+const Obj = require('./utilsMySQL.js')
 const app = express()
 const port = 3000
 
@@ -19,9 +20,9 @@ let users = [
 let shadows = new shadowsObj()
 
 // Crear i configurar l'objecte de la base de dades
-var db = new database()
+var db = new database();
 db.init({
-  host: "localhost",
+  host: "192.168.17.213",
   port: 5306,
   user: "root",
   password: "pwd",
@@ -68,14 +69,12 @@ async function getShadows (req, res) {
 }
 
 // Configurar direcció '/hola'
-app.get('/hola', hola);
+/*app.get('/hola', hola);
 async function hola(req, res) {
-  con.query("SELECT * FROM Users", (err, result, fields) => {
-    if (err) throw err;
-    // Return the fields object:
-    console.log(fields);
-  });
-}
+  let query = await db.query("SELECT * FROM Users");
+
+  res.send(query);
+}*/
 
 // Configurar la direcció '/ajaxCall'
 app.post('/ajaxCall', ajaxCall)
@@ -149,6 +148,20 @@ async function actionSignUp (objPost) {
 
   // Afegir l'usuari a les dades
   let user = {userName: userName, password: hash, token: token}
+
+  let registeredUsers = await db.query('SELECT * FROM Users');
+  
+  if (typeof registeredUsers === "object") {
+    console.log(user.userName == registeredUsers.name ? "Ya existe" : "No existe")
+    console.log(registeredUsers);
+  } else {
+    console.log("lol")
+  }
+  
+  // let isRegistered = registeredUsers.filter((regisUser) => regisUser.name === user.userName);
+
+  //console.log("isRegistered =", isRegistered);
+
   users.push(user)
   return {result: 'OK', userName: user.userName, token: token}
 }
