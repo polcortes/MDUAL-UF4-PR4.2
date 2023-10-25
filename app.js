@@ -11,8 +11,8 @@ const port = 3000
 let hash0 = crypto.createHash('md5').update("1234").digest("hex")
 let hash1 = crypto.createHash('md5').update("abcd").digest("hex")
 let users = [
-  {userName: 'user0', password: hash0, token: ''},
-  {userName: 'user1', password: hash1, token: ''}
+  { userName: 'user0', password: hash0, token: '' },
+  { userName: 'user1', password: hash1, token: '' }
 ]
 
 // Inicialitzar objecte de shadows
@@ -22,14 +22,14 @@ let shadows = new shadowsObj()
 var db = new database()
 db.init({
   host: "localhost",
-  port: 3306,
+  port: 5306,
   user: "root",
   password: "pwd",
-  database: "world"
-})
+  database: "Pr42"
+});
 
 // Publicar arxius carpeta ‘public’ 
-app.use(express.static('public'))
+app.use(express.static('public'));
 
 // Configurar per rebre dades POST en format JSON
 app.use(express.json());
@@ -67,6 +67,16 @@ async function getShadows (req, res) {
   res.send(shadows.getShadows())
 }
 
+// Configurar direcció '/hola'
+app.get('/hola', hola);
+async function hola(req, res) {
+  con.query("SELECT * FROM Users", (err, result, fields) => {
+    if (err) throw err;
+    // Return the fields object:
+    console.log(fields);
+  });
+}
+
 // Configurar la direcció '/ajaxCall'
 app.post('/ajaxCall', ajaxCall)
 async function ajaxCall (req, res) {
@@ -83,7 +93,7 @@ async function ajaxCall (req, res) {
       case 'actionLogin':             result = await actionLogin(objPost); break
       case 'actionSignUp':            result = await actionSignUp(objPost); break
       default:
-          result = {result: 'KO', message: 'Invalid callType'}
+          result = { result: 'KO', message: 'Invalid callType' }
           break;
   }
 
@@ -128,6 +138,8 @@ async function actionLogin (objPost) {
     return {result: 'OK', userName: user.userName, token: token}
   }
 }
+
+
 
 async function actionSignUp (objPost) {
   let userName = objPost.userName

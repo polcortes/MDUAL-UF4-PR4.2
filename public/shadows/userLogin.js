@@ -286,7 +286,7 @@ class UserLogin extends HTMLElement {
                 body: JSON.stringify(requestData)
             })
             if (!result.ok) {
-                throw new Error(`Error HTTP: ${result.status}`)
+                throw new Error(`Error HTTP: ${result.status}`);
             }
             resultData = await result.json()
         } catch (e) {

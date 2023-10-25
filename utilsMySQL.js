@@ -29,8 +29,8 @@ class Obj {
                 return callback(err)
             } else {
                 return connection.query(queryStr, (err, rst) => {
-                    connection.release()
-                    return callback(err, rst)
+                    connection.release();
+                    return callback(err, rst);
                 })
             }
         })
@@ -39,7 +39,7 @@ class Obj {
     // Fer una consulta a la base de dades amb 'promises'
     query (queryStr) {
         return new Promise((resolve, reject) => {
-            return this.callbackQuery(queryStr, (err, rst) => { if (err)  { return reject(err) } else { return resolve(rst) } })
+            return this.callbackQuery(queryStr, (err, rst) => { return (err ? reject(err) : resolve(rst)) })
         })
     }
 }
