@@ -22,7 +22,7 @@ let shadows = new shadowsObj()
 // Crear i configurar l'objecte de la base de dades
 var db = new database();
 db.init({
-  host: "192.168.17.213",
+  host: "192.168.122.1",
   port: 5306,
   user: "root",
   password: "pwd",
@@ -75,7 +75,7 @@ async function hola(req, res) {
 
   res.send(query);
 }*/
-
+  
 // Configurar la direcció '/ajaxCall'
 app.post('/ajaxCall', ajaxCall)
 async function ajaxCall (req, res) {
@@ -158,10 +158,15 @@ async function actionSignUp (objPost) {
     console.log("lol")
   }
   
-  // let isRegistered = registeredUsers.filter((regisUser) => regisUser.name === user.userName);
+  let isRegistered = registeredUsers.filter((regisUser) => regisUser.name === user.userName);
 
-  //console.log("isRegistered =", isRegistered);
+  console.log("isRegistered =", isRegistered);
 
-  users.push(user)
-  return {result: 'OK', userName: user.userName, token: token}
+  if (isRegistered.length === 0) {
+    //db.query(`INSERT INTO Users (name, mail, pwdHash, token) VALUES (${user.userName}, ${})`)
+    users.push(user);
+    console.log(users);
+  }
+
+  return {result: 'OK', userName: user.userName, email: user.email, token: token}
 }
