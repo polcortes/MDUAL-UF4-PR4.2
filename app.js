@@ -22,10 +22,10 @@ let shadows = new shadowsObj()
 // Crear i configurar l'objecte de la base de dades
 var db = new database();
 db.init({
-  host: "192.168.122.1",
-  port: 5306,
+  host: "localhost",  // ip portatil clase si estamos ahi
+  port: 3306,
   user: "root",
-  password: "pwd",
+  password: "1234",
   database: "Pr42"
 });
 
@@ -38,8 +38,8 @@ app.use(express.json());
 // Activar el servidor 
 const httpServer = app.listen(port, appListen)
 async function appListen () {
-  await shadows.init('./public/index.html', './public/shadows')
-  console.log(`Example app listening on: http://localhost:${port}`)
+  await shadows.init('./public/index.html', './public/shadows');
+  console.log(`Example app listening on: http://localhost:${port}`);
 }
 
 // Close connections when process is killed
@@ -69,12 +69,12 @@ async function getShadows (req, res) {
 }
 
 // Configurar direcció '/hola'
-/*app.get('/hola', hola);
+app.get('/hola', hola);
 async function hola(req, res) {
   let query = await db.query("SELECT * FROM Users");
 
   res.send(query);
-}*/
+}
   
 // Configurar la direcció '/ajaxCall'
 app.post('/ajaxCall', ajaxCall)
@@ -140,7 +140,7 @@ async function actionLogin (objPost) {
 
 
 
-async function actionSignUp (objPost) {
+async function actionSignUp(objPost) {
   let userName = objPost.userName
   let userPassword = objPost.userPassword
   let hash = crypto.createHash('md5').update(userPassword).digest("hex")
@@ -151,12 +151,10 @@ async function actionSignUp (objPost) {
 
   let registeredUsers = await db.query('SELECT * FROM Users');
   
-  if (typeof registeredUsers === "object") {
-    console.log(user.userName == registeredUsers.name ? "Ya existe" : "No existe")
-    console.log(registeredUsers);
-  } else {
-    console.log("lol")
-  }
+  // for (registeredUser of registeredUsers) {
+  //   console.log(user.userName === registeredUser.name ? "Ya existe" : "No existe");
+  //   console.log(typeof registeredUser.name, typeof user.userName)
+  // }
   
   let isRegistered = registeredUsers.filter((regisUser) => regisUser.name === user.userName);
 
