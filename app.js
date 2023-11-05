@@ -8,6 +8,15 @@ const Obj = require('./utilsMySQL.js')
 const app = express()
 const port = 3000
 
+const cookieParser = require('cookie-parser');
+const session = require('express-session')
+app.use(cookieParser());
+app.use(session({
+    secret: '34SDgsdgspxxxxxxxdfsG', // just a long random string
+    resave: false,
+    saveUninitialized: true
+}));
+
 // Gestionar usuaris en una variable (caldrà fer-ho a la base de dades)
 let hash0 = crypto.createHash('md5').update("1234").digest("hex")
 let hash1 = crypto.createHash('md5').update("abcd").digest("hex")
@@ -22,10 +31,10 @@ let shadows = new shadowsObj()
 // Crear i configurar l'objecte de la base de dades
 var db = new database();
 db.init({
-  host: "192.168.122.1",
-  port: 5306,
+  host: "localhost",
+  port: 3306,
   user: "root",
-  password: "pwd",
+  password: "",
   database: "Pr42"
 });
 
@@ -80,6 +89,8 @@ async function hola(req, res) {
 app.post('/ajaxCall', ajaxCall)
 async function ajaxCall (req, res) {
   let objPost = req.body;
+  objPost["sessionToken"] = req.sessionID
+  console.log(req.sessionID)
   let result = ""
 
   // Simulate delay (1 second)
@@ -123,6 +134,19 @@ async function actionLogout (objPost) {
 }
 
 async function actionLogin (objPost) {
+  console.log(objPost)
+  let userName = objPost.username
+  let userEmail = objPost.email
+  let userPassword = objPost.password
+  let userToken = objPost.sessionToken
+  console.log(crypto.createHash('md5').update(objPost.password).digest("hex"))
+  let query = await db.query(`SELECT * FROM users where name = '${userName}' and mail = "${userEmail}" and pwdHash = "${userPassword}" `)
+  if (query.length > 0) {
+    let id = query[0].id
+    await db.query(`UPDATE users SET token = "${userToken}" WHERE id = "${id}"`)
+    return {result: 'OK'}
+  }
+  /*
   let userName = objPost.userName
   let userPassword = objPost.userPassword
   let hash = crypto.createHash('md5').update(userPassword).digest("hex")
@@ -136,6 +160,7 @@ async function actionLogin (objPost) {
     user.token = token
     return {result: 'OK', userName: user.userName, token: token}
   }
+  */
 }
 
 
