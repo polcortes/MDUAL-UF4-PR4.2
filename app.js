@@ -96,6 +96,12 @@ async function ajaxCall (req, res) {
           break;
   }
 
+  if (result.result === 'KO') {
+    switch (result.message) {
+      case "El nombre de usuario ya está en uso":
+        res.send("error");    //! POR AQUI VOY
+    }
+  }
   // Retornar el resultat
   res.send(result)
 }
@@ -123,9 +129,9 @@ async function actionLogout (objPost) {
 }
 
 async function actionLogin (objPost) {
-  let userName = objPost.userName
-  let userPassword = objPost.userPassword
-  let hash = crypto.createHash('md5').update(userPassword).digest("hex")
+  let userName = objPost.userName;
+  let userPassword = objPost.userPassword;
+  let hash = crypto.createHash('md5').update(userPassword).digest("hex");
 
   // Buscar l'usuari a les dades
   let user = users.find(u => u.userName == userName && u.password == hash)
@@ -141,30 +147,29 @@ async function actionLogin (objPost) {
 
 
 async function actionSignUp(objPost) {
-  let userName = objPost.userName
-  let userPassword = objPost.userPassword
-  let hash = crypto.createHash('md5').update(userPassword).digest("hex")
-  let token = uuidv4()
+  let userName = objPost.userName;
+  let userPassword = objPost.userPassword;
+  let hash = crypto.createHash('md5').update(userPassword).digest("hex");
+  let token = uuidv4();
+  
+  let isRegistered = false;
 
   // Afegir l'usuari a les dades
-  let user = {userName: userName, password: hash, token: token}
+  let user = {userName: userName, password: hash, token: token};
 
   let registeredUsers = await db.query('SELECT * FROM Users');
   
-  // for (registeredUser of registeredUsers) {
-  //   console.log(user.userName === registeredUser.name ? "Ya existe" : "No existe");
-  //   console.log(typeof registeredUser.name, typeof user.userName)
-  // }
+  for (registeredUser of registeredUsers) {
+    if (user.userName === registeredUser.name) isRegistered = true;
+  }
   
-  let isRegistered = registeredUsers.filter((regisUser) => regisUser.name === user.userName);
+  // isRegistered = registeredUsers.filter((regisUser) => regisUser.name === user.userName);
 
   console.log("isRegistered =", isRegistered);
 
-  if (isRegistered.length === 0) {
-    //db.query(`INSERT INTO Users (name, mail, pwdHash, token) VALUES (${user.userName}, ${})`)
-    users.push(user);
-    console.log(users);
+  if (!isRegistered) {
+    // db.query(`INSERT INTO Users (name, mail, pwdHash, token) VALUES (${user.userName}, ${user.password}, ${user.hash}, ${user.token})`);
   }
 
-  return {result: 'OK', userName: user.userName, email: user.email, token: token}
+  return {result: 'OK', userName: user.userName, email: user.email, token: token};
 }
