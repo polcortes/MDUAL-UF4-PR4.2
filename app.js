@@ -31,10 +31,10 @@ let shadows = new shadowsObj()
 // Crear i configurar l'objecte de la base de dades
 var db = new database();
 db.init({
-  host: "localhost",  // ip portatil clase si estamos ahi
-  port: 3306,
+  host: "127.0.0.1",  // ip portatil clase si estamos ahi
+  port: 1234,
   user: "root",
-  password: "1234",
+  password: "pwd",
   database: "Pr42"
 });
 
@@ -113,6 +113,8 @@ async function ajaxCall (req, res) {
         res.send("error");    //! POR AQUI VOY
     }
   }
+
+  console.log(result)
   // Retornar el resultat
   res.send(result)
 }
@@ -140,12 +142,11 @@ async function actionLogout (objPost) {
 }
 
 async function actionLogin (objPost) {
-  console.log(objPost)
-  let userName = objPost.username
-  let userEmail = objPost.email
-  let userPassword = objPost.password
+  let userName = objPost.userName
+  let userEmail = objPost.userEmail
+  let userPassword = objPost.userPassword
   let userToken = objPost.sessionToken
-  console.log(crypto.createHash('md5').update(objPost.password).digest("hex"))
+  console.log(crypto.createHash('md5').update(objPost.userPassword).digest("hex"))
   let query = await db.query(`SELECT * FROM users where name = '${userName}' and mail = "${userEmail}" and pwdHash = "${userPassword}" `)
   if (query.length > 0) {
     let id = query[0].id
