@@ -218,6 +218,7 @@ class UserLogin extends HTMLElement {
 
     async actionLogin() {
         let refUserName = this.shadow.querySelector('#loginUserName')
+        let refUserEmail = this.shadow.querySelector('#loginEmail')
         let refPassword = this.shadow.querySelector('#loginPassword')
 
         // Mostrar la vista
@@ -226,6 +227,7 @@ class UserLogin extends HTMLElement {
         let requestData = {
             callType: 'actionLogin',
             userName: refUserName.value,
+            userEmail: refUserEmail.value,
             userPassword: refPassword.value
         }
 
