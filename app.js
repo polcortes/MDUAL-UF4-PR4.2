@@ -8,6 +8,12 @@ const Obj = require('./utilsMySQL.js')
 const app = express()
 const port = 3000
 
+/**
+ * TODO: 
+ *  - funciona el inicio de sesion ✅
+ *  - 
+*/
+
 const cookieParser = require('cookie-parser');
 const session = require('express-session')
 app.use(cookieParser());
@@ -31,10 +37,10 @@ let shadows = new shadowsObj()
 // Crear i configurar l'objecte de la base de dades
 var db = new database();
 db.init({
-  host: "127.0.0.1",  // ip portatil clase si estamos ahi
-  port: 1234,
+  host: "localhost",  // ip portatil clase si estamos ahi
+  port: 3306,
   user: "root",
-  password: "pwd",
+  password: "1234",
   database: "Pr42"
 });
 
@@ -176,26 +182,22 @@ async function actionSignUp(objPost) {
   let userName = objPost.userName;
   let userPassword = objPost.userPassword;
   let hash = crypto.createHash('md5').update(userPassword).digest("hex");
+  let email = objPost.userEmail;
   let token = uuidv4();
-  
-  let isRegistered = false;
 
   // Afegir l'usuari a les dades
-  let user = {userName: userName, password: hash, token: token};
+  let user = {userName: userName, password: hash, email: email, token: token};
 
   let registeredUsers = await db.query('SELECT * FROM Users');
   
-  for (registeredUser of registeredUsers) {
-    if (user.userName === registeredUser.name) isRegistered = true;
-  }
-  
-  // isRegistered = registeredUsers.filter((regisUser) => regisUser.name === user.userName);
+  let isRegistered = registeredUsers.filter((regisUser) => regisUser.name === user.userName);
 
   console.log("isRegistered =", isRegistered);
 
-  if (!isRegistered) {
-    // db.query(`INSERT INTO Users (name, mail, pwdHash, token) VALUES (${user.userName}, ${user.password}, ${user.hash}, ${user.token})`);
-  }
+  if (isRegistered.length == 0) {
+    db.query(`INSERT INTO Users (name, mail, pwdHash, token) VALUES (${user.userName}, ${user.password}, ${user.email}, ${user.token})`);
+    console.log("No está registrado, por lo tanto podemos meterle.");
+  } else return {result: 'KO', message: "error"}
 
   return {result: 'OK', userName: user.userName, email: user.email, token: token};
 }

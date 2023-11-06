@@ -37,7 +37,7 @@ class UserLogin extends HTMLElement {
         await this.actionCheckUserByToken()
     } 
 
-    checkSignUpPasswords () {
+    checkSignUpPasswords() {
         // Valida que les dues contrasenyes del 'signUp' siguin iguals
         let refPassword = this.shadow.querySelector('#signUpPassword')
         let refPasswordCheck = this.shadow.querySelector('#signUpPasswordCheck')
@@ -146,7 +146,7 @@ class UserLogin extends HTMLElement {
     }
     
 
-    showView (viewName, viewStatus) {
+    showView(viewName, viewStatus) {
         // Amagar totes les vistes
         this.shadow.querySelector('#viewInfo').style.display = 'none'
         this.shadow.querySelector('#viewLoginForm').style.display = 'none'
@@ -163,8 +163,12 @@ class UserLogin extends HTMLElement {
             this.setViewLoginStatus(viewStatus)
             break
         case 'viewSignUpForm':
-            this.shadow.querySelector('#viewSignUpForm').style.removeProperty('display')
-            this.setViewSignUpStatus(viewStatus)
+            /*if (viewStatus === "error") {
+
+            } else {*/
+                this.shadow.querySelector('#viewSignUpForm').style.removeProperty('display')
+                this.setViewSignUpStatus(viewStatus)
+            //}
             break
         }
     }
@@ -249,17 +253,20 @@ class UserLogin extends HTMLElement {
     }
 
     async actionSignUp() {
-        let refSignUpUserName = this.shadow.querySelector('#signUpUserName')
-        let refPassword = this.shadow.querySelector('#signUpPassword')
+        let refSignUpUserName = this.shadow.querySelector('#signUpUserName');
+        let refEmail = this.shadow.querySelector('#signUpEmail');
+        let refPassword = this.shadow.querySelector('#signUpPassword');
 
         // Mostrar la vista
-        this.showView('viewSignUpForm', 'loading')
+        this.showView('viewSignUpForm', 'loading');
 
         let requestData = {
             callType: 'actionSignUp',
             userName: refSignUpUserName.value,
+            userEmail: refEmail.value,
             userPassword: refPassword.value
         }
+
         let resultData = await this.callServer(requestData)
         if (resultData.result == 'OK') {
             this.setUserInfo(resultData.userName, resultData.token)
