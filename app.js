@@ -4,8 +4,18 @@ const url = require('url')
 const { v4: uuidv4 } = require('uuid')
 const database = require('./utilsMySQL.js')
 const shadowsObj = require('./utilsShadows.js')
+const Obj = require('./utilsMySQL.js')
 const app = express()
 const port = 3000
+
+const cookieParser = require('cookie-parser');
+const session = require('express-session')
+app.use(cookieParser());
+app.use(session({
+    secret: '34SDgsdgspxxxxxxxdfsG', // just a long random string
+    resave: false,
+    saveUninitialized: true
+}));
 
 // Gestionar usuaris en una variable (caldrà fer-ho a la base de dades)
 let hash0 = crypto.createHash('md5').update("1234").digest("hex")
@@ -19,12 +29,12 @@ let users = [
 let shadows = new shadowsObj()
 
 // Crear i configurar l'objecte de la base de dades
-var db = new database()
+var db = new database();
 db.init({
-  host: "localhost",
-  port: 5306,
+  host: "localhost",  // ip portatil clase si estamos ahi
+  port: 3306,
   user: "root",
-  password: "pwd",
+  password: "1234",
   database: "Pr42"
 });
 
@@ -37,8 +47,8 @@ app.use(express.json());
 // Activar el servidor 
 const httpServer = app.listen(port, appListen)
 async function appListen () {
-  await shadows.init('./public/index.html', './public/shadows')
-  console.log(`Example app listening on: http://localhost:${port}`)
+  await shadows.init('./public/index.html', './public/shadows');
+  console.log(`Example app listening on: http://localhost:${port}`);
 }
 
 // Close connections when process is killed
@@ -70,17 +80,17 @@ async function getShadows (req, res) {
 // Configurar direcció '/hola'
 app.get('/hola', hola);
 async function hola(req, res) {
-  con.query("SELECT * FROM Users", (err, result, fields) => {
-    if (err) throw err;
-    // Return the fields object:
-    console.log(fields);
-  });
-}
+  let query = await db.query("SELECT * FROM Users");
 
+  res.send(query);
+}
+  
 // Configurar la direcció '/ajaxCall'
 app.post('/ajaxCall', ajaxCall)
 async function ajaxCall (req, res) {
   let objPost = req.body;
+  objPost["sessionToken"] = req.sessionID
+  console.log(req.sessionID)
   let result = ""
 
   // Simulate delay (1 second)
@@ -97,6 +107,12 @@ async function ajaxCall (req, res) {
           break;
   }
 
+  if (result.result === 'KO') {
+    switch (result.message) {
+      case "El nombre de usuario ya está en uso":
+        res.send("error");    //! POR AQUI VOY
+    }
+  }
   // Retornar el resultat
   res.send(result)
 }
@@ -124,6 +140,19 @@ async function actionLogout (objPost) {
 }
 
 async function actionLogin (objPost) {
+  console.log(objPost)
+  let userName = objPost.username
+  let userEmail = objPost.email
+  let userPassword = objPost.password
+  let userToken = objPost.sessionToken
+  console.log(crypto.createHash('md5').update(objPost.password).digest("hex"))
+  let query = await db.query(`SELECT * FROM users where name = '${userName}' and mail = "${userEmail}" and pwdHash = "${userPassword}" `)
+  if (query.length > 0) {
+    let id = query[0].id
+    await db.query(`UPDATE users SET token = "${userToken}" WHERE id = "${id}"`)
+    return {result: 'OK'}
+  }
+  /*
   let userName = objPost.userName
   let userPassword = objPost.userPassword
   let hash = crypto.createHash('md5').update(userPassword).digest("hex")
@@ -137,18 +166,35 @@ async function actionLogin (objPost) {
     user.token = token
     return {result: 'OK', userName: user.userName, token: token}
   }
+  */
 }
 
 
 
-async function actionSignUp (objPost) {
-  let userName = objPost.userName
-  let userPassword = objPost.userPassword
-  let hash = crypto.createHash('md5').update(userPassword).digest("hex")
-  let token = uuidv4()
+async function actionSignUp(objPost) {
+  let userName = objPost.userName;
+  let userPassword = objPost.userPassword;
+  let hash = crypto.createHash('md5').update(userPassword).digest("hex");
+  let token = uuidv4();
+  
+  let isRegistered = false;
 
   // Afegir l'usuari a les dades
-  let user = {userName: userName, password: hash, token: token}
-  users.push(user)
-  return {result: 'OK', userName: user.userName, token: token}
+  let user = {userName: userName, password: hash, token: token};
+
+  let registeredUsers = await db.query('SELECT * FROM Users');
+  
+  for (registeredUser of registeredUsers) {
+    if (user.userName === registeredUser.name) isRegistered = true;
+  }
+  
+  // isRegistered = registeredUsers.filter((regisUser) => regisUser.name === user.userName);
+
+  console.log("isRegistered =", isRegistered);
+
+  if (!isRegistered) {
+    // db.query(`INSERT INTO Users (name, mail, pwdHash, token) VALUES (${user.userName}, ${user.password}, ${user.hash}, ${user.token})`);
+  }
+
+  return {result: 'OK', userName: user.userName, email: user.email, token: token};
 }

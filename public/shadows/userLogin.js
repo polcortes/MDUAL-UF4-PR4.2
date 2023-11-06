@@ -225,7 +225,7 @@ class UserLogin extends HTMLElement {
         this.showView('viewLoginForm', 'loading')
 
         let requestData = {
-            callType: 'actionLogin',
+            callType: 'actionTest',
             userName: refUserName.value,
             userEmail: refUserEmail.value,
             userPassword: refPassword.value
