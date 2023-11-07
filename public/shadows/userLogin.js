@@ -26,6 +26,7 @@ class UserLogin extends HTMLElement {
         // NO es pot fer des de l'HTML, al ser shadow no funciona
         // Es recomana fer-ho amb '.bind(this, paràmetres ...)' per simplificar les crides a les funcions
         this.shadow.querySelector('#infoBtnLogOut').addEventListener('click', this.actionLogout.bind(this))
+        this.shadow.querySelector('#tableBtnLogOut').addEventListener('click', this.actionLogout.bind(this))
         this.shadow.querySelector('#loginForm').addEventListener('submit', this.actionLogin.bind(this))
         this.shadow.querySelector('#loginBtn').addEventListener('click', this.actionLogin.bind(this))
         this.shadow.querySelector('#loginShowSignUpForm').addEventListener('click', this.showView.bind(this, 'viewSignUpForm', 'initial'))
@@ -34,6 +35,8 @@ class UserLogin extends HTMLElement {
         this.shadow.querySelector('#signUpPasswordCheck').addEventListener('input', this.checkSignUpPasswords.bind(this))
         this.shadow.querySelector('#signUpBtn').addEventListener('click', this.actionSignUp.bind(this))
         this.shadow.querySelector('#signUpShowLoginForm').addEventListener('click', this.showView.bind(this, 'viewLoginForm', 'initial'))
+        this.shadow.querySelector('#tableBtnAdd').addEventListener('click', this.actionOpenAdd.bind(this))
+        this.shadow.querySelector('#tableBtnGoBack').addEventListener('click', this.actionGoStart.bind(this))
 
         // Automàticament, validar l'usuari per 'token' (si n'hi ha)
         await this.actionCheckUserByToken()
@@ -153,7 +156,17 @@ class UserLogin extends HTMLElement {
     }
 
     setViewTableStatus(status) {
-
+        let tableRows = this.shadow.getElementById("tableRows");
+        let loading = this.shadow.getElementById("tableLoading")
+        switch(status) {
+            case 'load':
+                loading.style.opacity = 0
+                this.actionGetTableRows()
+            case 'loading':
+                loading.style.opacity = 1
+            case 'loaded':
+                loading.style.opacity = 0
+        }
     }
     
 
@@ -186,6 +199,43 @@ class UserLogin extends HTMLElement {
             this.shadow.querySelector('#viewTable').style.removeProperty('display')
             this.setViewTableStatus(viewStatus)
         }
+    }
+
+    async actionGoStart() {
+        this.showView('viewInfo', 'logged')
+    }
+
+    async actionGetTableRows() {
+        this.showView('viewTable', 'loading')
+        let tokenValue = window.localStorage.getItem("token")
+        if (tokenValue) {
+            let requestData = {
+                callType: 'actionGetTableRows',
+                table: this.selectedTable,
+                token: tokenValue
+            }
+            let resultData = await this.callServer(requestData)
+            let tableRows = this.shadow.getElementById("tableRows")
+            tableRows.innerHTML = ""
+            if (resultData.result == 'OK') {
+                for (let i = 0; i < resultData.tableRows.length; i++) {
+                    tableRows.innerHTML += `<li>ID: ${resultData.tableRows[i]}</li>`
+                }
+                this.setViewTableStatus('loaded')
+            } else {
+                // Esborrar totes les dades del localStorage
+                this.setUserInfo('', '')
+                this.showView('viewLoginForm', 'initial')
+            }           
+        } else {
+            // No hi ha token de sessió, mostrem el 'loginForm'
+            this.setUserInfo('', '')
+            this.showView('viewLoginForm', 'initial')
+        }
+    }
+
+    async actionOpenAdd() {
+        
     }
 
     async actionCheckUserByToken() {
