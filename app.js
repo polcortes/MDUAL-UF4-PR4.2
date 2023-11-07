@@ -40,7 +40,7 @@ db.init({
   host: "localhost",  // ip portatil clase si estamos ahi
   port: 3306,
   user: "root",
-  password: "1234",
+  password: "",
   database: "Pr42"
 });
 
@@ -108,6 +108,7 @@ async function ajaxCall (req, res) {
       case 'actionLogout':            result = await actionLogout(objPost); break
       case 'actionLogin':             result = await actionLogin(objPost); break
       case 'actionSignUp':            result = await actionSignUp(objPost); break
+      case 'actionGetTableList':      result = await actionGetTableList(objPost); break
       default:
           result = { result: 'KO', message: 'Invalid callType' }
           break;
@@ -157,7 +158,7 @@ async function actionLogin (objPost) {
   if (query.length > 0) {
     let id = query[0].id
     await db.query(`UPDATE users SET token = "${userToken}" WHERE id = "${id}"`)
-    return {result: 'OK'}
+    return {result: 'OK', userName: userName, token: userToken}
   }
   /*
   let userName = objPost.userName
@@ -200,4 +201,18 @@ async function actionSignUp(objPost) {
   } else return {result: 'KO', message: "error"}
 
   return {result: 'OK', userName: user.userName, email: user.email, token: token};
+}
+
+async function actionGetTableList(objPost) {
+  let token = objPost.token;
+  if (validateToken(token)) {
+    let query = await db.query(`SHOW TABLES`)
+    console.log(query)
+    return {result: 'OK'}
+  }
+}
+
+async function validateToken(token) {
+  let query = await db.query(`SELECT * FROM users WHERE token = '${token}'`)
+  return (query.length > 0);
 }

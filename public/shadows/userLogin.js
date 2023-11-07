@@ -67,6 +67,10 @@ class UserLogin extends HTMLElement {
         let refLoading = this.shadow.querySelector('#infoLoading')
         let refButton = this.shadow.querySelector('#infoBtnLogOut')
 
+        if (status != 'notLogged') {
+            //this.actionGetTableList()
+        }
+
         switch (status) {
         case 'loading':
             refUserName.innerText = ""
@@ -281,6 +285,30 @@ class UserLogin extends HTMLElement {
 
             // Mostrar el formulari de signUp 'inicial'
             this.showView('viewSignUpForm', 'initial')
+        }           
+    }
+
+    async actionGetTableList() {
+
+        let requestData = {
+            callType: 'actionGetTableList',
+            token: window.localStorage.getItem('token')
+        }
+        let resultData = await this.callServer(requestData)
+        if (resultData.result == 'OK') {
+            console.log(resultData)
+        } else {
+            /*
+            // Esborrar el password
+            refPassword.value = ""
+          
+            // Mostrar l'error dos segons
+            this.showView('viewInfoForm', 'error')
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            // Mostrar el formulari de signUp 'inicial'
+            this.showView('viewInfoForm', 'initial')
+            */
         }           
     }
 
