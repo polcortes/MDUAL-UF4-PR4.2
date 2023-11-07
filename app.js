@@ -8,6 +8,12 @@ const Obj = require('./utilsMySQL.js')
 const app = express()
 const port = 3000
 
+/**
+ * TODO: 
+ *  - funciona el inicio de sesion ✅
+ *  - 
+*/
+
 const cookieParser = require('cookie-parser');
 const session = require('express-session')
 app.use(cookieParser());
@@ -34,7 +40,7 @@ db.init({
   host: "localhost",  // ip portatil clase si estamos ahi
   port: 3306,
   user: "root",
-  password: "1234",
+  password: "",
   database: "Pr42"
 });
 
@@ -102,6 +108,7 @@ async function ajaxCall (req, res) {
       case 'actionLogout':            result = await actionLogout(objPost); break
       case 'actionLogin':             result = await actionLogin(objPost); break
       case 'actionSignUp':            result = await actionSignUp(objPost); break
+      case 'actionGetTableList':      result = await actionGetTableList(objPost); break
       default:
           result = { result: 'KO', message: 'Invalid callType' }
           break;
@@ -113,6 +120,8 @@ async function ajaxCall (req, res) {
         res.send("error");    //! POR AQUI VOY
     }
   }
+
+  console.log(result)
   // Retornar el resultat
   res.send(result)
 }
@@ -139,18 +148,17 @@ async function actionLogout (objPost) {
   }
 }
 
-async function actionLogin(objPost) {
-  console.log(objPost)
-  let userName = objPost.username
-  let userEmail = objPost.email
-  let userPassword = objPost.password
+async function actionLogin (objPost) {
+  let userName = objPost.userName
+  let userEmail = objPost.userEmail
+  let userPassword = objPost.userPassword
   let userToken = objPost.sessionToken
-  console.log(crypto.createHash('md5').update(objPost.password).digest("hex"))
+  console.log(crypto.createHash('md5').update(objPost.userPassword).digest("hex"))
   let query = await db.query(`SELECT * FROM users where name = '${userName}' and mail = "${userEmail}" and pwdHash = "${userPassword}" `)
   if (query.length > 0) {
     let id = query[0].id
     await db.query(`UPDATE users SET token = "${userToken}" WHERE id = "${id}"`)
-    return {result: 'OK'}
+    return {result: 'OK', userName: userName, token: userToken}
   }
   /*
   let userName = objPost.userName
@@ -175,6 +183,7 @@ async function actionSignUp(objPost) {
   let userName = objPost.userName;
   let userPassword = objPost.userPassword;
   let hash = crypto.createHash('md5').update(userPassword).digest("hex");
+  let email = objPost.userEmail;
   let token = uuidv4();
 
   let isRegistered = false;
@@ -182,17 +191,32 @@ async function actionSignUp(objPost) {
   console.log("email:", objPost);
 
   // Afegir l'usuari a les dades
-  let user = {userName: userName, password: hash, token: token};
+  let user = {userName: userName, password: hash, email: email, token: token};
 
   let registeredUsers = await db.query('SELECT * FROM Users');
   
-  for (registeredUser of registeredUsers) {
-    if (user.userName === registeredUser.name) isRegistered = true;
-  }
+  let isRegistered = registeredUsers.filter((regisUser) => regisUser.name === user.userName);
 
-  if (!isRegistered) {
-    // db.query(`INSERT INTO Users (name, mail, pwdHash, token) VALUES ("${user.userName}", "${user.mail}", "${user.password}", "${user.token}")`);
-  }
+  console.log("isRegistered =", isRegistered);
+
+  if (isRegistered.length == 0) {
+    db.query(`INSERT INTO Users (name, mail, pwdHash, token) VALUES (${user.userName}, ${user.password}, ${user.email}, ${user.token})`);
+    console.log("No está registrado, por lo tanto podemos meterle.");
+  } else return {result: 'KO', message: "error"}
 
   return {result: 'OK', userName: user.userName, email: user.email, token: token};
+}
+
+async function actionGetTableList(objPost) {
+  let token = objPost.token;
+  if (validateToken(token)) {
+    let query = await db.query(`SHOW TABLES`)
+    console.log(query)
+    return {result: 'OK'}
+  }
+}
+
+async function validateToken(token) {
+  let query = await db.query(`SELECT * FROM users WHERE token = '${token}'`)
+  return (query.length > 0);
 }

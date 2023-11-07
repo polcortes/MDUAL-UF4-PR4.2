@@ -67,6 +67,10 @@ class UserLogin extends HTMLElement {
         let refLoading = this.shadow.querySelector('#infoLoading')
         let refButton = this.shadow.querySelector('#infoBtnLogOut')
 
+        if (status != 'notLogged') {
+            //this.actionGetTableList()
+        }
+
         switch (status) {
         case 'loading':
             refUserName.innerText = ""
@@ -146,7 +150,7 @@ class UserLogin extends HTMLElement {
     }
     
 
-    showView (viewName, viewStatus) {
+    showView(viewName, viewStatus) {
         // Amagar totes les vistes
         this.shadow.querySelector('#viewInfo').style.display = 'none'
         this.shadow.querySelector('#viewLoginForm').style.display = 'none'
@@ -163,8 +167,12 @@ class UserLogin extends HTMLElement {
             this.setViewLoginStatus(viewStatus)
             break
         case 'viewSignUpForm':
-            this.shadow.querySelector('#viewSignUpForm').style.removeProperty('display')
-            this.setViewSignUpStatus(viewStatus)
+            /*if (viewStatus === "error") {
+
+            } else {*/
+                this.shadow.querySelector('#viewSignUpForm').style.removeProperty('display')
+                this.setViewSignUpStatus(viewStatus)
+            //}
             break
         }
     }
@@ -218,14 +226,16 @@ class UserLogin extends HTMLElement {
 
     async actionLogin() {
         let refUserName = this.shadow.querySelector('#loginUserName')
+        let refUserEmail = this.shadow.querySelector('#loginEmail')
         let refPassword = this.shadow.querySelector('#loginPassword')
 
         // Mostrar la vista
         this.showView('viewLoginForm', 'loading')
 
         let requestData = {
-            callType: 'actionTest',
+            callType: 'actionLogin',
             userName: refUserName.value,
+            userEmail: refUserEmail.value,
             userPassword: refPassword.value
         }
 
@@ -247,17 +257,20 @@ class UserLogin extends HTMLElement {
     }
 
     async actionSignUp() {
-        let refSignUpUserName = this.shadow.querySelector('#signUpUserName')
-        let refPassword = this.shadow.querySelector('#signUpPassword')
+        let refSignUpUserName = this.shadow.querySelector('#signUpUserName');
+        let refEmail = this.shadow.querySelector('#signUpEmail');
+        let refPassword = this.shadow.querySelector('#signUpPassword');
 
         // Mostrar la vista
-        this.showView('viewSignUpForm', 'loading')
+        this.showView('viewSignUpForm', 'loading');
 
         let requestData = {
             callType: 'actionSignUp',
             userName: refSignUpUserName.value,
+            userEmail: refEmail.value,
             userPassword: refPassword.value
         }
+
         let resultData = await this.callServer(requestData)
         if (resultData.result == 'OK') {
             this.setUserInfo(resultData.userName, resultData.token)
@@ -272,6 +285,30 @@ class UserLogin extends HTMLElement {
 
             // Mostrar el formulari de signUp 'inicial'
             this.showView('viewSignUpForm', 'initial')
+        }           
+    }
+
+    async actionGetTableList() {
+
+        let requestData = {
+            callType: 'actionGetTableList',
+            token: window.localStorage.getItem('token')
+        }
+        let resultData = await this.callServer(requestData)
+        if (resultData.result == 'OK') {
+            console.log(resultData)
+        } else {
+            /*
+            // Esborrar el password
+            refPassword.value = ""
+          
+            // Mostrar l'error dos segons
+            this.showView('viewInfoForm', 'error')
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            // Mostrar el formulari de signUp 'inicial'
+            this.showView('viewInfoForm', 'initial')
+            */
         }           
     }
 
