@@ -45,9 +45,9 @@ class UserLogin extends HTMLElement {
         let refPasswordCheck = this.shadow.querySelector('#signUpPasswordCheck')
 
         if (refPassword.value == refPasswordCheck.value) {
-            this.setViewSignUpStatus('initial')
+            this.setViewSignUpStatus('initial');
         } else {
-            this.setViewSignUpStatus('passwordError')
+            this.setViewSignUpStatus('passwordError');
         }
     }
 
