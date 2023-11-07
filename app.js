@@ -40,7 +40,7 @@ db.init({
   host: "localhost",  // ip portatil clase si estamos ahi
   port: 3306,
   user: "root",
-  password: "",
+  password: "1234",
   database: "Pr42"
 });
 
@@ -138,7 +138,10 @@ async function actionCheckUserByToken (objPost) {
 }
 
 async function actionLogout (objPost) {
-  let tokenValue = objPost.token
+  let tokenValue = objPost.token;
+
+  await db.query(`UPDATE Users SET token = '' WHERE token = '${tokenValue}'`);
+
   // Si troba el token a les dades, retorna el nom d'usuari
   let user = users.find(u => u.token == tokenValue)
   if (!user) {
@@ -159,7 +162,7 @@ async function actionLogin (objPost) {
     let id = query[0].id
     await db.query(`UPDATE users SET token = "${userToken}" WHERE id = "${id}"`)
     return {result: 'OK', userName: userName, token: userToken}
-  }
+  } else return {result: 'KO'};
   /*
   let userName = objPost.userName
   let userPassword = objPost.userPassword
@@ -186,7 +189,7 @@ async function actionSignUp(objPost) {
   let email = objPost.userEmail;
   let token = uuidv4();
 
-  let isRegistered = false;
+  // let isRegistered = false;
 
   console.log("email:", objPost);
 
@@ -200,7 +203,7 @@ async function actionSignUp(objPost) {
   console.log("isRegistered =", isRegistered);
 
   if (isRegistered.length == 0) {
-    db.query(`INSERT INTO Users (name, mail, pwdHash, token) VALUES (${user.userName}, ${user.password}, ${user.email}, ${user.token})`);
+    db.query(`INSERT INTO Users (name, mail, pwdHash, token) VALUES ("${user.userName}", "${user.email}", "${user.password}", "${user.token}")`);
     console.log("No está registrado, por lo tanto podemos meterle.");
   } else return {result: 'KO', message: "error"}
 
