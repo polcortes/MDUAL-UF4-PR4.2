@@ -186,8 +186,6 @@ async function actionSignUp(objPost) {
   let email = objPost.userEmail;
   let token = uuidv4();
 
-  let isRegistered = false;
-
   console.log("email:", objPost);
 
   // Afegir l'usuari a les dades
