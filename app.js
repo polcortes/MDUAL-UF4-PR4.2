@@ -40,7 +40,7 @@ db.init({
   host: "localhost",  // ip portatil clase si estamos ahi
   port: 3306,
   user: "root",
-  password: "1234",
+  password: "",
   database: "Pr42"
 });
 
@@ -109,6 +109,7 @@ async function ajaxCall (req, res) {
       case 'actionLogin':             result = await actionLogin(objPost); break
       case 'actionSignUp':            result = await actionSignUp(objPost); break
       case 'actionGetTableList':      result = await actionGetTableList(objPost); break
+      case 'actionGetTableRows':      result = await actionGetTableRows(objPost); break
       default:
           result = { result: 'KO', message: 'Invalid callType' }
           break;
@@ -124,6 +125,18 @@ async function ajaxCall (req, res) {
   console.log(result)
   // Retornar el resultat
   res.send(result)
+}
+
+async function actionGetTableRows(objPost) {
+  let token = objPost.token
+  if (validateToken(token)) {
+    let query = await db.query(`SELECT * FROM ${objPost.table}`)
+    let tableRows = []
+    for (let i = 0; i < query.length; i++) {
+      tableRows.push(query[i].id)
+    }
+    return {result: 'OK', tableRows: tableRows}
+  }
 }
 
 async function actionCheckUserByToken (objPost) {
