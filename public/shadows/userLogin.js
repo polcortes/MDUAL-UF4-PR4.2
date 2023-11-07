@@ -235,7 +235,31 @@ class UserLogin extends HTMLElement {
     }
 
     async actionOpenAdd() {
-        
+        let tokenValue = window.localStorage.getItem("token")
+        if (tokenValue) {
+            let requestData = {
+                callType: 'actionGetTableRows',
+                table: this.selectedTable,
+                token: tokenValue
+            }
+            let resultData = await this.callServer(requestData)
+            let tableRows = this.shadow.getElementById("tableRows")
+            tableRows.innerHTML = ""
+            if (resultData.result == 'OK') {
+                for (let i = 0; i < resultData.tableRows.length; i++) {
+                    tableRows.innerHTML += `<li>ID: ${resultData.tableRows[i]}</li>`
+                }
+                this.setViewTableStatus('loaded')
+            } else {
+                // Esborrar totes les dades del localStorage
+                this.setUserInfo('', '')
+                this.showView('viewLoginForm', 'initial')
+            }           
+        } else {
+            // No hi ha token de sessió, mostrem el 'loginForm'
+            this.setUserInfo('', '')
+            this.showView('viewLoginForm', 'initial')
+        }
     }
 
     async actionCheckUserByToken() {
