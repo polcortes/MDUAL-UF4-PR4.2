@@ -37,15 +37,15 @@ class UserLogin extends HTMLElement {
         await this.actionCheckUserByToken()
     } 
 
-    checkSignUpPasswords () {
+    checkSignUpPasswords() {
         // Valida que les dues contrasenyes del 'signUp' siguin iguals
         let refPassword = this.shadow.querySelector('#signUpPassword')
         let refPasswordCheck = this.shadow.querySelector('#signUpPasswordCheck')
 
         if (refPassword.value == refPasswordCheck.value) {
-            this.setViewSignUpStatus('initial')
+            this.setViewSignUpStatus('initial');
         } else {
-            this.setViewSignUpStatus('passwordError')
+            this.setViewSignUpStatus('passwordError');
         }
     }
 

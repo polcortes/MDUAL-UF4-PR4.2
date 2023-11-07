@@ -139,7 +139,7 @@ async function actionLogout (objPost) {
   }
 }
 
-async function actionLogin (objPost) {
+async function actionLogin(objPost) {
   console.log(objPost)
   let userName = objPost.username
   let userEmail = objPost.email
@@ -176,8 +176,10 @@ async function actionSignUp(objPost) {
   let userPassword = objPost.userPassword;
   let hash = crypto.createHash('md5').update(userPassword).digest("hex");
   let token = uuidv4();
-  
+
   let isRegistered = false;
+
+  console.log("email:", objPost);
 
   // Afegir l'usuari a les dades
   let user = {userName: userName, password: hash, token: token};
@@ -187,13 +189,9 @@ async function actionSignUp(objPost) {
   for (registeredUser of registeredUsers) {
     if (user.userName === registeredUser.name) isRegistered = true;
   }
-  
-  // isRegistered = registeredUsers.filter((regisUser) => regisUser.name === user.userName);
-
-  console.log("isRegistered =", isRegistered);
 
   if (!isRegistered) {
-    // db.query(`INSERT INTO Users (name, mail, pwdHash, token) VALUES (${user.userName}, ${user.password}, ${user.hash}, ${user.token})`);
+    // db.query(`INSERT INTO Users (name, mail, pwdHash, token) VALUES ("${user.userName}", "${user.mail}", "${user.password}", "${user.token}")`);
   }
 
   return {result: 'OK', userName: user.userName, email: user.email, token: token};
