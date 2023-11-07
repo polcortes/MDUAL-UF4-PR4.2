@@ -34,6 +34,8 @@ class UserLogin extends HTMLElement {
         this.shadow.querySelector('#signUpPasswordCheck').addEventListener('input', this.checkSignUpPasswords.bind(this))
         this.shadow.querySelector('#signUpBtn').addEventListener('click', this.actionSignUp.bind(this))
         this.shadow.querySelector('#signUpShowLoginForm').addEventListener('click', this.showView.bind(this, 'viewLoginForm', 'initial'))
+        this.shadow.querySelector('#tableBtnLogOut').addEventListener('click', this.actionLogout.bind(this))
+        this.shadow.querySelector('#tableBtnGoBack').addEventListener('click', this.actionGetTableList.bind(this, 'viewTable', 'initial'))
 
         // Automàticament, validar l'usuari per 'token' (si n'hi ha)
         await this.actionCheckUserByToken()
@@ -337,6 +339,15 @@ class UserLogin extends HTMLElement {
             this.showView('viewInfoForm', 'initial')
             */
         }           
+    }
+
+    async actionGetAllAreas() {
+        this.showView('viewInfo', 'loading');
+
+        let requestData = {
+            callType: 'actionGetAllAreas',
+            table: ""
+        }
     }
 
     async callServer(requestData) {
