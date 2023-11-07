@@ -235,7 +235,11 @@ async function actionGetTableList(objPost) {
   }
 }
 
+async function actionGetAllAreas(objPost) {
+  
+}
+
 async function validateToken(token) {
-  let query = await db.query(`SELECT * FROM users WHERE token = '${token}'`)
+  let query = await db.query(`SELECT * FROM users WHERE token = '${token}'`);
   return (query.length > 0);
 }
