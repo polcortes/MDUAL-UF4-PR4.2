@@ -1,4 +1,6 @@
 class UserLogin extends HTMLElement {
+    getTableListFlag = true
+    selectedTable = ""
     constructor() {
         super()
         this.shadow = this.attachShadow({ mode: 'open' })
@@ -67,9 +69,6 @@ class UserLogin extends HTMLElement {
         let refLoading = this.shadow.querySelector('#infoLoading')
         let refButton = this.shadow.querySelector('#infoBtnLogOut')
 
-        if (status != 'notLogged') {
-            //this.actionGetTableList()
-        }
 
         switch (status) {
         case 'loading':
@@ -78,6 +77,10 @@ class UserLogin extends HTMLElement {
             refButton.disabled = true
             break
         case 'logged':
+            if (this.getTableListFlag) {
+                this.actionGetTableList()
+                this.getTableListFlag = false
+            }
             refUserName.innerText = window.localStorage.getItem("userName")
             refLoading.style.opacity = 0
             refButton.disabled = false
@@ -148,6 +151,10 @@ class UserLogin extends HTMLElement {
             break
         }
     }
+
+    setViewTableStatus(status) {
+
+    }
     
 
     showView(viewName, viewStatus) {
@@ -155,6 +162,7 @@ class UserLogin extends HTMLElement {
         this.shadow.querySelector('#viewInfo').style.display = 'none'
         this.shadow.querySelector('#viewLoginForm').style.display = 'none'
         this.shadow.querySelector('#viewSignUpForm').style.display = 'none'
+        this.shadow.querySelector('#viewTable').style.display = 'none'
 
         // Mostrar la vista seleccionada, amb l'status indicat
         switch (viewName) {
@@ -174,6 +182,9 @@ class UserLogin extends HTMLElement {
                 this.setViewSignUpStatus(viewStatus)
             //}
             break
+        case 'viewTable':
+            this.shadow.querySelector('#viewTable').style.removeProperty('display')
+            this.setViewTableStatus(viewStatus)
         }
     }
 
@@ -290,13 +301,29 @@ class UserLogin extends HTMLElement {
 
     async actionGetTableList() {
 
+        let self = this
+
+        this.showView('viewInfo', 'loading');
+
         let requestData = {
             callType: 'actionGetTableList',
             token: window.localStorage.getItem('token')
         }
+        let tableList = this.shadow.getElementById("tableList")
         let resultData = await this.callServer(requestData)
         if (resultData.result == 'OK') {
-            console.log(resultData)
+            tableList.innerHTML = "";
+            for (let i = 0; i < resultData.tableList.length; i++) {
+                tableList.innerHTML += `<li>${resultData.tableList[i]}</li>`
+            }
+
+            let tables = this.shadow.querySelectorAll("#tableList li")
+            for (let i = 0; i < tables.length; i++) {
+                tables[i].addEventListener("click", function() {
+                    self.selectedTable = tables[i].innerHTML
+                    self.showView('viewTable', 'load')
+                })
+            }
         } else {
             /*
             // Esborrar el password

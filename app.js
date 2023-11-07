@@ -207,8 +207,11 @@ async function actionGetTableList(objPost) {
   let token = objPost.token;
   if (validateToken(token)) {
     let query = await db.query(`SHOW TABLES`)
-    console.log(query)
-    return {result: 'OK'}
+    let tableList = []
+    for (let i = 0; i < query.length; i++) {
+      tableList.push(query[i].Tables_in_pr42)
+    }
+    return {result: 'OK', tableList: tableList} 
   }
 }
 
