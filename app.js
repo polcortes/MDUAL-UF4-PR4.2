@@ -33,12 +33,13 @@ let users = [
 
 // Inicialitzar objecte de shadows
 let shadows = new shadowsObj()
+const ddbb = "Pr42"
 
 // Crear i configurar l'objecte de la base de dades
 var db = new database();
 db.init({
-  host: "localhost",  // ip portatil clase si estamos ahi
-  port: 1234,
+  host: /*"localhost"*/'192.168.19.248',  // ip portatil clase si estamos ahi
+  port: /*3306,*/5306,
   user: "root",
   password: "pwd",
   database: "Pr42"
@@ -118,7 +119,7 @@ async function ajaxCall (req, res) {
   if (result.result === 'KO') {
     switch (result.message) {
       case "El nombre de usuario ya está en uso":
-        res.send("error");    //! POR AQUI VOY
+        res.send("error");
     }
   }
 
@@ -153,7 +154,7 @@ async function actionCheckUserByToken (objPost) {
 async function actionLogout (objPost) {
   let tokenValue = objPost.token;
 
-  await db.query(`UPDATE Users SET token = '' WHERE token = '${tokenValue}'`);
+  await db.query(`UPDATE users SET token = '' WHERE token = '${tokenValue}'`);
 
   // Si troba el token a les dades, retorna el nom d'usuari
   let user = users.find(u => u.token == tokenValue)
@@ -227,9 +228,10 @@ async function actionGetTableList(objPost) {
   let token = objPost.token;
   if (validateToken(token)) {
     let query = await db.query(`SHOW TABLES`)
+    console.log(query)
     let tableList = []
     for (let i = 0; i < query.length; i++) {
-      tableList.push(query[i].Tables_in_Pr42)
+      tableList.push(query[i][`Tables_in_${ddbb}`])
     }
     return {result: 'OK', tableList: tableList} 
   }
