@@ -38,9 +38,9 @@ let shadows = new shadowsObj()
 var db = new database();
 db.init({
   host: "localhost",  // ip portatil clase si estamos ahi
-  port: 3306,
+  port: 1234,
   user: "root",
-  password: "",
+  password: "pwd",
   database: "Pr42"
 });
 
@@ -229,7 +229,7 @@ async function actionGetTableList(objPost) {
     let query = await db.query(`SHOW TABLES`)
     let tableList = []
     for (let i = 0; i < query.length; i++) {
-      tableList.push(query[i].Tables_in_pr42)
+      tableList.push(query[i].Tables_in_Pr42)
     }
     return {result: 'OK', tableList: tableList} 
   }
