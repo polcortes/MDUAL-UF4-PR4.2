@@ -280,22 +280,17 @@ class UserLogin extends HTMLElement {
         let tokenValue = window.localStorage.getItem("token")
         if (tokenValue) {
             let requestData = {
-                callType: 'actionGetTableRows',
                 callType: 'actionGetTableCols',
                 table: this.selectedTable,
                 token: tokenValue
             }
             let resultData = await this.callServer(requestData)
-            let tableRows = this.shadow.getElementById("tableRows")
-            tableRows.innerHTML = ""
             let addRowList = this.shadow.getElementById("addRowList")
             addRowList.innerHTML = ""
             if (resultData.result == 'OK') {
                 for (let i = 0; i < resultData.tableRows.length; i++) {
-                    tableRows.innerHTML += `<li>ID: ${resultData.tableRows[i]}</li>`
                     addRowList.innerHTML += `<li><label>${resultData.tableRows[i]} </label><input type="text" id="${resultData.tableRows[i]}"></li>`
                 }
-                this.setViewTableStatus('loaded')
                 this.showView('viewAddRow', 'loaded')
             } else {
                 // Esborrar totes les dades del localStorage
