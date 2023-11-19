@@ -39,10 +39,10 @@ const ddbb = "pr42"
 var db = new database();
 db.init({
   host: "localhost"/*'192.168.19.248'*/,  // ip portatil clase si estamos ahi
-  port: 3306,
+  port: 3306/*5306*/,
   user: "root",
-  password: "1234",
-  database: "Pr42"
+  password: "",
+  database: "pr42"
 });
 
 // Publicar arxius carpeta ‘public’ 
@@ -104,6 +104,8 @@ async function ajaxCall(req, res) {
       case 'actionGetTableList':      result = await actionGetTableList(objPost); break
       case 'actionGetTableRows':      result = await actionGetTableRows(objPost); break
       case 'editTableRow':            result = await editTableRow(objPost); break
+      case 'actionGetTableCols':      result = await actionGetTableCols(objPost); break
+      case 'actionAddRow':            result = await actionAddRow(objPost); break
       default:
           result = { result: 'KO', message: 'Invalid callType' }
           break;
@@ -195,15 +197,84 @@ async function performDatabaseUpdate(data) {
   async function actionGetTableRows(objPost) {
     let token = objPost.token
   if (validateToken(token)) {
+    console.log(objPost.table)
     let query = await db.query(`SELECT * FROM ${objPost.table}`);
     let columnNamesQuery = await db.query(`DESCRIBE ${objPost.table}`);
     let columnNames = columnNamesQuery.map(column => column.Field)
     let tableRows = []
     for (let i = 0; i < query.length; i++) {
-      tableRows.push(query[i])
+      tableRows.push(query[i].id)
     }
     return {result: 'OK', columnNames: columnNames, tableRows: tableRows};
   }
+  return {result: 'KO'}
+}
+
+async function actionAddRow(objPost) {
+  let token = objPost.token
+  if (validateToken(token)) {
+    console.log(objPost.data)
+    let queryText = `INSERT INTO ${objPost.table} (`
+    for (let i = 0; i < objPost.data.length; i++) {
+      queryText += objPost.data[i].field
+      if (i != objPost.data.length - 1) {
+        queryText += ", "
+      }
+    }
+    queryText += ") VALUES ("
+    for (let i = 0; i < objPost.data.length; i++) {
+      queryText += "'" + objPost.data[i].value + "'"
+      if (i != objPost.data.length - 1) {
+        queryText += ", "
+      }
+    }
+    queryText += ")"
+    let query = await db.query(queryText)
+    return {result: 'OK'}
+  }
+  return {result: 'KO'}
+}
+
+async function actionGetTableCols(objPost) {
+  let token = objPost.token
+  if (validateToken(token)) {
+    console.log(objPost.table)
+    let query = await db.query(`SHOW COLUMNS FROM ${objPost.table}`)
+    console.log(query)
+    let tableRows = []
+    for (let i = 0; i < query.length; i++) {
+      if (query[i].Field != "id") {
+        tableRows.push(query[i].Field)
+      }
+    }
+    return {result: 'OK', tableRows: tableRows}
+  }
+  return {result: 'KO'}
+}
+
+async function actionAddRow(objPost) {
+  let token = objPost.token
+  if (validateToken(token)) {
+    console.log(objPost.data)
+    let queryText = `INSERT INTO ${objPost.table} (`
+    for (let i = 0; i < objPost.data.length; i++) {
+      queryText += objPost.data[i].field
+      if (i != objPost.data.length - 1) {
+        queryText += ", "
+      }
+    }
+    queryText += ") VALUES ("
+    for (let i = 0; i < objPost.data.length; i++) {
+      queryText += "'" + objPost.data[i].value + "'"
+      if (i != objPost.data.length - 1) {
+        queryText += ", "
+      }
+    }
+    queryText += ")"
+    let query = await db.query(queryText)
+    return {result: 'OK'}
+  }
+  return {result: 'KO'}
 }
 
 async function actionCheckUserByToken (objPost) {
