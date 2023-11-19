@@ -1,5 +1,7 @@
 // const { restart } = require("nodemon")
 
+let self;
+
 class UserLogin extends HTMLElement {
     getTableListFlag = true
     selectedTable = ""
@@ -296,6 +298,32 @@ class UserLogin extends HTMLElement {
         this.setViewInfoStatus('logged')
     }
 
+    async editTableRow(event) {
+        try {
+            const editedInput = event.target;
+    
+            const newValue = editedInput.value;
+    
+            const columnName = editedInput.previousSibling.textContent.replace(':', '').trim();
+            const rowData = {
+                columnName: columnName,
+                newValue: newValue,
+                table: this.selectedTable,
+                token: window.localStorage.getItem('token')
+            };
+    
+            const result = await this.updateDatabase(rowData);
+    
+            if (result.result === 'OK') {
+                console.log('Database updated successfully.');
+            } else {
+                console.error('Error updating database:', result.message);
+            }
+        } catch (error) {
+            console.error('Error updating database:', error.message);
+        }
+    }
+
     async actionGetTableRows() {
         this.showView('viewTable', 'loading')
         let tokenValue = window.localStorage.getItem("token")
@@ -319,6 +347,7 @@ class UserLogin extends HTMLElement {
                     tableRows.innerHTML += `<button class="deleteRow" id="${row.id}">Eliminar fila</button>`
                     tableRows.innerHTML += `<hr />`;
                 }
+                this.shadow.querySelectorAll('.tableRowEdit').forEach(el => el.addEventListener('input', this.editTableRow.bind(this)));
                 let deleteButtonList = this.shadow.querySelectorAll(".deleteRow")
                 for (let i = 0; i < deleteButtonList.length; i++) {
                     deleteButtonList[i].addEventListener('click', this.actionDeleteRow.bind(this, deleteButtonList[i].id))
@@ -360,8 +389,53 @@ class UserLogin extends HTMLElement {
         }
     }
 
-    async editTableRow() {
-        
+    async actionDeleteRow(rowId) {
+        let tokenValue = window.localStorage.getItem("token")
+        if (tokenValue) {
+            let requestData = {
+                callType: 'actionDeleteRow',
+                table: this.selectedTable,
+                id: rowId,
+                token: tokenValue
+            }
+            let resultData = await this.callServer(requestData)
+            if (resultData.result == 'OK') {
+                this.actionGetTableRows();
+            } else {
+                // Esborrar totes les dades del localStorage
+                this.setUserInfo('', '')
+                this.showView('viewLoginForm', 'initial')
+            }           
+        } else {
+            // No hi ha token de sessió, mostrem el 'loginForm'
+            this.setUserInfo('', '')
+            this.showView('viewLoginForm', 'initial')
+        }
+    }
+
+    
+    async updateDatabase(rowData) {
+        try {
+            const result = await fetch('/updateDatabase', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(rowData)
+            });
+    
+            if (!result.ok) {
+                console.error('Error updating database:', result.statusText);
+                // Puedes manejar el error según tus necesidades
+                return { result: 'KO', message: result.statusText };
+            }
+    
+            const responseData = await result.json();
+    
+            return responseData;
+        } catch (error) {
+            console.error('Error updating database:', error.message);
+            // Puedes manejar el error según tus necesidades
+            return { result: 'KO', message: 'Internal Server Error' };
+        }
     }
 
     async actionOpenAddRow() {
