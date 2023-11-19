@@ -1,5 +1,7 @@
 // const { restart } = require("nodemon")
 
+let self;
+
 class UserLogin extends HTMLElement {
     getTableListFlag = true
     selectedTable = ""
@@ -41,7 +43,8 @@ class UserLogin extends HTMLElement {
         this.shadow.querySelector('#tableBtnGoBack').addEventListener('click', this.actionGoStart.bind(this))
         this.shadow.querySelector('#tableBtnLogOut').addEventListener('click', this.actionLogout.bind(this))
         this.shadow.querySelector('#tableBtnGoBack').addEventListener('click', this.actionGetTableList.bind(this, 'viewTable', 'initial'))
-        this.shadow.querySelectorAll('.tableRowEdit').forEach(el => el.addEventListener("change", this.editTableRow.bind(this)));
+        
+
 
 
         // Automàticament, validar l'usuari per 'token' (si n'hi ha)
@@ -211,6 +214,32 @@ class UserLogin extends HTMLElement {
         this.showView('viewInfo', 'logged')
     }
 
+    async editTableRow(event) {
+        try {
+            const editedInput = event.target;
+    
+            const newValue = editedInput.value;
+    
+            const columnName = editedInput.previousSibling.textContent.replace(':', '').trim();
+            const rowData = {
+                columnName: columnName,
+                newValue: newValue,
+                table: this.selectedTable,
+                token: window.localStorage.getItem('token')
+            };
+    
+            const result = await this.updateDatabase(rowData);
+    
+            if (result.result === 'OK') {
+                console.log('Database updated successfully.');
+            } else {
+                console.error('Error updating database:', result.message);
+            }
+        } catch (error) {
+            console.error('Error updating database:', error.message);
+        }
+    }
+
     async actionGetTableRows() {
         this.showView('viewTable', 'loading')
         let tokenValue = window.localStorage.getItem("token")
@@ -233,6 +262,7 @@ class UserLogin extends HTMLElement {
                     }
                     tableRows.innerHTML += `<hr />`;
                 }
+                this.shadow.querySelectorAll('.tableRowEdit').forEach(el => el.addEventListener('input', this.editTableRow.bind(this)));
                 this.setViewTableStatus('loaded')
             } else {
                 // Esborrar totes les dades del localStorage
@@ -246,8 +276,29 @@ class UserLogin extends HTMLElement {
         }
     }
 
-    async editTableRow() {
-        
+    
+    async updateDatabase(rowData) {
+        try {
+            const result = await fetch('/updateDatabase', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(rowData)
+            });
+    
+            if (!result.ok) {
+                console.error('Error updating database:', result.statusText);
+                // Puedes manejar el error según tus necesidades
+                return { result: 'KO', message: result.statusText };
+            }
+    
+            const responseData = await result.json();
+    
+            return responseData;
+        } catch (error) {
+            console.error('Error updating database:', error.message);
+            // Puedes manejar el error según tus necesidades
+            return { result: 'KO', message: 'Internal Server Error' };
+        }
     }
 
     async actionOpenAdd() {

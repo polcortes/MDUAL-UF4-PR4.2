@@ -85,12 +85,12 @@ async function getShadows (req, res) {
 }
   
 // Configurar la direcció '/ajaxCall'
-app.post('/ajaxCall', ajaxCall)
-async function ajaxCall (req, res) {
+app.post('/ajaxCall', ajaxCall);
+async function ajaxCall(req, res) {
   let objPost = req.body;
-  objPost["sessionToken"] = req.sessionID
-  console.log(req.sessionID)
-  let result = ""
+  objPost["sessionToken"] = req.sessionID;
+  console.log(req.sessionID);
+  let result = "";
 
   // Simulate delay (1 second)
   // await new Promise(resolve => setTimeout(resolve, 1000));
@@ -116,13 +116,84 @@ async function ajaxCall (req, res) {
     }
   }
 
-  console.log(result)
-  // Retornar el resultat
-  res.send(result)
+  console.log(result);
+  // Retornar el resultado
+  res.send(result);
 }
 
-async function actionGetTableRows(objPost) {
-  let token = objPost.token
+
+// Define la función para manejar las actualizaciones de la base de datos
+app.post('/updateDatabase', updateDatabase);
+async function updateDatabase(req, res) {
+  try {
+    let objPost = req.body;
+    let result = await performDatabaseUpdate(objPost);
+    res.send(result);
+  } catch (error) {
+    console.error('Error updating database:', error.message);
+    res.status(500).send({ result: 'KO', message: 'Internal Server Error' });
+  }
+}
+
+
+// Define la función para realizar la actualización de la base de datos
+async function performDatabaseUpdate(data) {
+  try {
+    // Construye el objeto con los datos a enviar al servidor
+    const requestData = {
+        callType: 'updateDatabase',
+        table: data.table,
+        columnName: data.columnName,
+        newValue: data.newValue,
+        token: data.token
+    };
+
+    // Realiza la solicitud al servidor utilizando fetch
+    const result = await fetch('http://localhost:3000/updateDatabase', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestData)
+    });
+
+    // Maneja la respuesta del servidor
+    if (!result.ok) {
+        console.error('Error updating database:', result.statusText);
+        // Devuelve un objeto con el resultado y un mensaje de error
+        return { result: 'KO', message: result.statusText };
+    }
+
+    // Maneja la respuesta JSON del servidor
+    const responseData = await result.json();
+
+    // Devuelve el resultado de la operación
+    return responseData;
+  } catch (error) {
+    console.error('Error performing database update:', error.message);
+    // Devuelve un objeto con el resultado y un mensaje de error
+    return { result: 'KO', message: 'Internal Server Error' };
+  }
+}
+  
+  // async function performDatabaseUpdate(data) {
+  //     try {
+  //         // Realiza la lógica necesaria para actualizar la base de datos
+  //         // Puedes usar los datos proporcionados en el objeto 'data'
+  
+  //         // Ejemplo: Actualizar la base de datos con el nuevo valor
+  //         // await db.query(`UPDATE ${data.table} SET ${data.columnName} = "${data.newValue}" WHERE token = '${data.token}'`);
+  
+  //         // Devolver un objeto con el resultado de la operación
+  //         return { result: 'OK' };
+  //     } catch (error) {
+  //         console.error('Error performing database update:', error.message);
+  //         // Devolver un objeto con el resultado y un mensaje de error
+  //         return { result: 'KO', message: 'Internal Server Error' };
+  //     }
+  // }
+  
+  
+  async function actionGetTableRows(objPost) {
+    let token = objPost.token
   if (validateToken(token)) {
     let query = await db.query(`SELECT * FROM ${objPost.table}`);
     let columnNamesQuery = await db.query(`DESCRIBE ${objPost.table}`);
@@ -160,8 +231,44 @@ async function actionLogout (objPost) {
   }
 }
 
+// async function editTableRow(objPost) {
+//   try {
+//     let token = objPost.token;
+//     let columnName = objPost.columnName;
+//     let newValue = objPost.newValue;
+
+//     if (validateToken(token)) {
+//       // Realizar la actualización en la base de datos
+//       await db.query(`UPDATE ${objPost.table} SET ${columnName} = "${newValue}" WHERE token = '${token}'`);
+      
+//       return { result: 'OK' };
+//     } else {
+//       return { result: 'KO', message: 'Invalid token' };
+//     }
+//   } catch (error) {
+//     console.error('Error editing table row:', error.message);
+//     return { result: 'KO', message: 'Internal Server Error' };
+//   }
+// }
+
 async function editTableRow(objPost) {
-  
+  try {
+    let token = objPost.token;
+    let columnName = objPost.columnName;
+    let newValue = objPost.newValue;
+
+    if (validateToken(token)) {
+      // Realizar la actualización en la base de datos
+      await db.query(`UPDATE ${objPost.table} SET ${columnName} = "${newValue}" WHERE token = '${token}'`);
+
+      return { result: 'OK' };
+    } else {
+      return { result: 'KO', message: 'Invalid token' };
+    }
+  } catch (error) {
+    console.error('Error editing table row:', error.message);
+    return { result: 'KO', message: 'Internal Server Error' };
+  }
 }
 
 async function actionLogin (objPost) {
