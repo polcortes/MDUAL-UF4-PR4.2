@@ -33,15 +33,15 @@ let users = [
 
 // Inicialitzar objecte de shadows
 let shadows = new shadowsObj()
-const ddbb = "Pr42"
+const ddbb = "pr42"
 
 // Crear i configurar l'objecte de la base de dades
 var db = new database();
 db.init({
-  host: /*"localhost"*/'192.168.19.248',  // ip portatil clase si estamos ahi
-  port: /*3306,*/5306,
+  host: "localhost"/*'192.168.19.248'*/,  // ip portatil clase si estamos ahi
+  port: 3306,
   user: "root",
-  password: "pwd",
+  password: "1234",
   database: "Pr42"
 });
 
@@ -83,14 +83,6 @@ async function getShadows (req, res) {
   res.setHeader('Content-Type', 'application/javascript');
   res.send(shadows.getShadows())
 }
-
-// Configurar direcció '/hola'
-app.get('/hola', hola);
-async function hola(req, res) {
-  let query = await db.query("SELECT * FROM Users");
-
-  res.send(query);
-}
   
 // Configurar la direcció '/ajaxCall'
 app.post('/ajaxCall', ajaxCall)
@@ -101,7 +93,7 @@ async function ajaxCall (req, res) {
   let result = ""
 
   // Simulate delay (1 second)
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  // await new Promise(resolve => setTimeout(resolve, 1000));
 
   // Processar la petició
   switch (objPost.callType) {
@@ -111,6 +103,7 @@ async function ajaxCall (req, res) {
       case 'actionSignUp':            result = await actionSignUp(objPost); break
       case 'actionGetTableList':      result = await actionGetTableList(objPost); break
       case 'actionGetTableRows':      result = await actionGetTableRows(objPost); break
+      case 'editTableRow':            result = await editTableRow(objPost); break
       default:
           result = { result: 'KO', message: 'Invalid callType' }
           break;
@@ -131,12 +124,14 @@ async function ajaxCall (req, res) {
 async function actionGetTableRows(objPost) {
   let token = objPost.token
   if (validateToken(token)) {
-    let query = await db.query(`SELECT * FROM ${objPost.table}`)
+    let query = await db.query(`SELECT * FROM ${objPost.table}`);
+    let columnNamesQuery = await db.query(`DESCRIBE ${objPost.table}`);
+    let columnNames = columnNamesQuery.map(column => column.Field)
     let tableRows = []
     for (let i = 0; i < query.length; i++) {
-      tableRows.push(query[i].id)
+      tableRows.push(query[i])
     }
-    return {result: 'OK', tableRows: tableRows}
+    return {result: 'OK', columnNames: columnNames, tableRows: tableRows};
   }
 }
 
@@ -163,6 +158,10 @@ async function actionLogout (objPost) {
   } else {
       return {result: 'OK'}
   }
+}
+
+async function editTableRow(objPost) {
+  
 }
 
 async function actionLogin (objPost) {

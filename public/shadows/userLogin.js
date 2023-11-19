@@ -1,3 +1,5 @@
+// const { restart } = require("nodemon")
+
 class UserLogin extends HTMLElement {
     getTableListFlag = true
     selectedTable = ""
@@ -39,6 +41,8 @@ class UserLogin extends HTMLElement {
         this.shadow.querySelector('#tableBtnGoBack').addEventListener('click', this.actionGoStart.bind(this))
         this.shadow.querySelector('#tableBtnLogOut').addEventListener('click', this.actionLogout.bind(this))
         this.shadow.querySelector('#tableBtnGoBack').addEventListener('click', this.actionGetTableList.bind(this, 'viewTable', 'initial'))
+        this.shadow.querySelectorAll('.tableRowEdit').forEach(el => el.addEventListener("change", this.editTableRow.bind(this)));
+
 
         // Automàticament, validar l'usuari per 'token' (si n'hi ha)
         await this.actionCheckUserByToken()
@@ -220,8 +224,14 @@ class UserLogin extends HTMLElement {
             let tableRows = this.shadow.getElementById("tableRows")
             tableRows.innerHTML = ""
             if (resultData.result == 'OK') {
-                for (let i = 0; i < resultData.tableRows.length; i++) {
-                    tableRows.innerHTML += `<li>ID: ${resultData.tableRows[i]}</li>`
+                for (const row of resultData.tableRows) {
+                    // Itera sobre las columnas
+                    for (const columnName of resultData.columnNames) {
+                        // Accede al valor correspondiente en la fila actual
+                        const value = row[columnName];
+                        tableRows.innerHTML += `<label>${columnName}: <input type="text" class="tableRowEdit" value="${value}"></label><br />`
+                    }
+                    tableRows.innerHTML += `<hr />`;
                 }
                 this.setViewTableStatus('loaded')
             } else {
@@ -234,6 +244,10 @@ class UserLogin extends HTMLElement {
             this.setUserInfo('', '')
             this.showView('viewLoginForm', 'initial')
         }
+    }
+
+    async editTableRow() {
+        
     }
 
     async actionOpenAdd() {
