@@ -42,8 +42,11 @@ class UserLogin extends HTMLElement {
         this.shadow.querySelector('#tableBtnLogOut').addEventListener('click', this.actionLogout.bind(this))
         this.shadow.querySelector('#tableBtnGoBack').addEventListener('click', this.actionGetTableList.bind(this, 'viewTable', 'initial'))
         this.shadow.querySelectorAll('.tableRowEdit').forEach(el => el.addEventListener("change", this.editTableRow.bind(this)));
+        this.shadow.querySelector('#tableBtnGoBack').addEventListener('click', this.actionGetTableList.bind(this, 'viewTable', 'initial'))
+        this.shadow.querySelector('#infoBtnAddTable').addEventListener('click', this.actionOpenAddTable.bind(this))
+        this.shadow.querySelector('#addTableBtnAddColumn').addEventListener('click', this.addTableColumn.bind(this))
+        this.shadow.querySelector('#addTableBtnSave').addEventListener('click', this.actionSaveTable.bind(this))
 
-        this.shadow.querySelector('#addRowBtnSave').addEventListener('click', this.actionSaveRow.bind(this))
 
         // Automàticament, validar l'usuari per 'token' (si n'hi ha)
         await this.actionCheckUserByToken()
@@ -201,6 +204,7 @@ class UserLogin extends HTMLElement {
         this.shadow.querySelector('#viewSignUpForm').style.display = 'none'
         this.shadow.querySelector('#viewTable').style.display = 'none'
         this.shadow.querySelector('#viewAddRow').style.display = 'none'
+        this.shadow.querySelector('#viewAddTable').style.display = 'none'
 
         // Mostrar la vista seleccionada, amb l'status indicat
         switch (viewName) {
@@ -227,6 +231,62 @@ class UserLogin extends HTMLElement {
         case 'viewAddRow':
             this.shadow.querySelector('#viewAddRow').style.removeProperty('display')
             this.setViewAddRowStatus(viewStatus)
+            break
+        case 'viewAddTable':
+            this.shadow.querySelector('#viewAddTable').style.removeProperty('display')
+            this.resetAddTableList();
+        }
+    }
+
+    resetAddTableList() {
+        this.shadow.querySelector('#addTableColumnList').innerHTML = "<li id='column-0'><input type='text' class='addTableColumn'></li>"
+    }
+
+    addTableColumn() {
+        let deleteColumnButtonList = this.shadow.querySelectorAll('.deleteColumn')
+        let item = document.createElement("li")
+        item.id = `column-${deleteColumnButtonList.length+1}`
+        item.innerHTML = `<input type='text' class='addTableColumn'><button class='deleteColumn' id="deleteCol-${deleteColumnButtonList.length+1}">Eliminar columna</button>`
+        this.shadow.querySelector('#addTableColumnList').append(item)
+        deleteColumnButtonList = this.shadow.querySelectorAll('.deleteColumn')
+        for (let i = 0; i < deleteColumnButtonList.length; i++) {
+            console.log(deleteColumnButtonList[i])
+            deleteColumnButtonList[i].addEventListener('click', this.deleteColumn.bind(this, i+1))
+        }
+    }
+
+    deleteColumn(columnNum) {
+        this.shadow.querySelector(`#column-${columnNum}`).remove()
+    }
+
+    async actionSaveTable() {
+        let columnsList = this.shadow.querySelectorAll(".addTableColumn")
+        let tableName = this.shadow.getElementById("tableName").value
+        let data = []
+        for (let i = 0; i < columnsList.length; i++) {
+            data.push(columnsList[i].value)
+        }
+        let tokenValue = window.localStorage.getItem("token")
+        if (tokenValue) {
+            let requestData = {
+                callType: 'actionCreateTable',
+                tableName: tableName,
+                tableCols: data,
+                token: tokenValue
+            }
+            let resultData = await this.callServer(requestData)
+            if (resultData.result == 'OK') {
+                this.getTableListFlag = true;
+                this.showView('viewInfo', 'logged')
+            } else {
+                // Esborrar totes les dades del localStorage
+                this.setUserInfo('', '')
+                this.showView('viewLoginForm', 'initial')
+            }           
+        } else {
+            // No hi ha token de sessió, mostrem el 'loginForm'
+            this.setUserInfo('', '')
+            this.showView('viewLoginForm', 'initial')
         }
     }
 
@@ -256,9 +316,38 @@ class UserLogin extends HTMLElement {
                         const value = row[columnName];
                         tableRows.innerHTML += `<label>${columnName}: <input type="text" class="tableRowEdit" value="${value}"></label><br />`
                     }
+                    tableRows.innerHTML += `<button class="deleteRow" id="${row.id}">Eliminar fila</button>`
                     tableRows.innerHTML += `<hr />`;
                 }
+                let deleteButtonList = this.shadow.querySelectorAll(".deleteRow")
+                for (let i = 0; i < deleteButtonList.length; i++) {
+                    deleteButtonList[i].addEventListener('click', this.actionDeleteRow.bind(this, deleteButtonList[i].id))
+                }
                 this.setViewTableStatus('loaded')
+            } else {
+                // Esborrar totes les dades del localStorage
+                this.setUserInfo('', '')
+                this.showView('viewLoginForm', 'initial')
+            }           
+        } else {
+            // No hi ha token de sessió, mostrem el 'loginForm'
+            this.setUserInfo('', '')
+            this.showView('viewLoginForm', 'initial')
+        }
+    }
+
+    async actionDeleteRow(rowId) {
+        let tokenValue = window.localStorage.getItem("token")
+        if (tokenValue) {
+            let requestData = {
+                callType: 'actionDeleteRow',
+                table: this.selectedTable,
+                id: rowId,
+                token: tokenValue
+            }
+            let resultData = await this.callServer(requestData)
+            if (resultData.result == 'OK') {
+                this.actionGetTableRows();
             } else {
                 // Esborrar totes les dades del localStorage
                 this.setUserInfo('', '')
@@ -302,6 +391,10 @@ class UserLogin extends HTMLElement {
             this.setUserInfo('', '')
             this.showView('viewLoginForm', 'initial')
         }
+    }
+
+    async actionOpenAddTable() {
+        this.showView('viewAddTable', 'loading')
     }
 
     async actionSaveRow() {
@@ -461,13 +554,14 @@ class UserLogin extends HTMLElement {
         if (resultData.result == 'OK') {
             tableList.innerHTML = "";
             for (let i = 0; i < resultData.tableList.length; i++) {
-                tableList.innerHTML += `<li>${resultData.tableList[i]}</li>`
+                tableList.innerHTML += `<li><input class="tableName" value="${resultData.tableList[i]}"><button class="openTableButton" id="${resultData.tableList[i]}">Obrir taula</button><button class="deleteTableButton" id="${resultData.tableList[i]}">Eliminar taula</button></li>`
             }
 
-            let tables = this.shadow.querySelectorAll("#tableList li")
+            let tables = this.shadow.querySelectorAll(".openTableButton")
             for (let i = 0; i < tables.length; i++) {
                 tables[i].addEventListener("click", function() {
-                    self.selectedTable = tables[i].innerHTML
+                    console.log(this)
+                    self.selectedTable = this.id
                     self.showView('viewTable', 'load')
                 })
             }

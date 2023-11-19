@@ -106,6 +106,9 @@ async function ajaxCall (req, res) {
       case 'editTableRow':            result = await editTableRow(objPost); break
       case 'actionGetTableCols':      result = await actionGetTableCols(objPost); break
       case 'actionAddRow':            result = await actionAddRow(objPost); break
+      case 'actionDeleteRow':         result = await actionDeleteRow(objPost); break
+      case 'actionCreateTable':       result = await actionCreateTable(objPost); break
+      case 'actionDropTable':         result = await actionDropTable(objPost); break
       default:
           result = { result: 'KO', message: 'Invalid callType' }
           break;
@@ -132,7 +135,7 @@ async function actionGetTableRows(objPost) {
     let columnNames = columnNamesQuery.map(column => column.Field)
     let tableRows = []
     for (let i = 0; i < query.length; i++) {
-      tableRows.push(query[i].id)
+      tableRows.push(query[i])
     }
     return {result: 'OK', columnNames: columnNames, tableRows: tableRows};
   }
@@ -160,6 +163,39 @@ async function actionAddRow(objPost) {
     queryText += ")"
     let query = await db.query(queryText)
     return {result: 'OK'}
+  }
+  return {result: 'KO'}
+}
+
+async function actionDeleteRow(objPost) {
+  let token = objPost.token
+  if (validateToken(token)) {
+    console.log(objPost.table)
+    let query = await db.query(`DELETE FROM ${objPost.table} WHERE id = '${objPost.id}'`);
+    return {result: 'OK'};
+  }
+  return {result: 'KO'}
+}
+
+async function actionCreateTable(objPost) {
+  let token = objPost.token
+  if (validateToken(token)) {
+    let queryText = `CREATE TABLE IF NOT EXISTS \`${objPost.tableName}\` (\`id\` int NOT NULL AUTO_INCREMENT, `
+    for (let i = 0; i < objPost.tableCols.length; i++) {
+      queryText += `\`${objPost.tableCols[i]}\` char(255), `
+    }
+    queryText += "PRIMARY KEY (`id`));"
+    let query = await db.query(queryText);
+    return {result: 'OK'};
+  }
+  return {result: 'KO'}
+}
+
+async function actionDropTable(objPost) {
+  let token = objPost.token
+  if (validateToken(token)) {
+    let query = await db.query(`DROP TABLE ${objPost.tableName}`);
+    return {result: 'OK'};
   }
   return {result: 'KO'}
 }

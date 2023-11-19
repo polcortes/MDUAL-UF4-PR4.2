@@ -8,7 +8,26 @@
             
         </ul>
         <div class="row">
+            <button id="infoBtnAddTable">Crear taula</button>
+        </div>
+        <div class="row">
             <button id="infoBtnLogOut">Logout</button>
+        </div>
+    </div>
+    <div id="viewAddTable">
+        <div class="title">Crear taula</div>
+        <div>Nom de la taula: </div>
+        <input type="text" id="tableName"><br>
+        <span>Columnes:</span>
+        <ul id="addTableColumnList">
+
+        </ul>
+        <div class="row">
+            <button id="addTableBtnAddColumn">Afegir columna</button>
+        </div>
+        <div class="row">
+            <button id="addTableBtnSave">Guardar</button>
+            <button id="addTableBtnGoBack">Tornar</button>
         </div>
     </div>
     <div id="viewAddRow">
@@ -17,9 +36,6 @@
 
         </ul>
         <div id="addRowLoading" class="loading">Loading ...</div>
-        <div class="row">
-            <button id="addRowBtnLogOut">Logout</button>
-        </div>
         <div class="row">
             <button id="addRowBtnSave">Guardar</button>
             <button id="addRowBtnGoBack">Tornar</button>
