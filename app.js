@@ -33,16 +33,16 @@ let users = [
 
 // Inicialitzar objecte de shadows
 let shadows = new shadowsObj()
-const ddbb = "Pr42"
+const ddbb = "pr42"
 
 // Crear i configurar l'objecte de la base de dades
 var db = new database();
 db.init({
-  host: /*"localhost"*/'192.168.19.248',  // ip portatil clase si estamos ahi
-  port: /*3306,*/5306,
+  host: "localhost"/*'192.168.19.248'*/,  // ip portatil clase si estamos ahi
+  port: 3306/*5306*/,
   user: "root",
-  password: "pwd",
-  database: "Pr42"
+  password: "",
+  database: "pr42"
 });
 
 // Publicar arxius carpeta ‘public’ 
@@ -111,6 +111,8 @@ async function ajaxCall (req, res) {
       case 'actionSignUp':            result = await actionSignUp(objPost); break
       case 'actionGetTableList':      result = await actionGetTableList(objPost); break
       case 'actionGetTableRows':      result = await actionGetTableRows(objPost); break
+      case 'actionGetTableCols':      result = await actionGetTableCols(objPost); break
+      case 'actionAddRow':            result = await actionAddRow(objPost); break
       default:
           result = { result: 'KO', message: 'Invalid callType' }
           break;
@@ -131,6 +133,7 @@ async function ajaxCall (req, res) {
 async function actionGetTableRows(objPost) {
   let token = objPost.token
   if (validateToken(token)) {
+    console.log(objPost.table)
     let query = await db.query(`SELECT * FROM ${objPost.table}`)
     let tableRows = []
     for (let i = 0; i < query.length; i++) {
@@ -138,6 +141,48 @@ async function actionGetTableRows(objPost) {
     }
     return {result: 'OK', tableRows: tableRows}
   }
+}
+
+async function actionGetTableCols(objPost) {
+  let token = objPost.token
+  if (validateToken(token)) {
+    console.log(objPost.table)
+    let query = await db.query(`SHOW COLUMNS FROM ${objPost.table}`)
+    console.log(query)
+    let tableRows = []
+    for (let i = 0; i < query.length; i++) {
+      if (query[i].Field != "id") {
+        tableRows.push(query[i].Field)
+      }
+    }
+    return {result: 'OK', tableRows: tableRows}
+  }
+  return {result: 'KO'}
+}
+
+async function actionAddRow(objPost) {
+  let token = objPost.token
+  if (validateToken(token)) {
+    console.log(objPost.data)
+    let queryText = `INSERT INTO ${objPost.table} (`
+    for (let i = 0; i < objPost.data.length; i++) {
+      queryText += objPost.data[i].field
+      if (i != objPost.data.length - 1) {
+        queryText += ", "
+      }
+    }
+    queryText += ") VALUES ("
+    for (let i = 0; i < objPost.data.length; i++) {
+      queryText += "'" + objPost.data[i].value + "'"
+      if (i != objPost.data.length - 1) {
+        queryText += ", "
+      }
+    }
+    queryText += ")"
+    let query = await db.query(queryText)
+    return {result: 'OK'}
+  }
+  return {result: 'KO'}
 }
 
 async function actionCheckUserByToken (objPost) {

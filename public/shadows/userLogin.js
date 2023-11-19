@@ -35,10 +35,11 @@ class UserLogin extends HTMLElement {
         this.shadow.querySelector('#signUpPasswordCheck').addEventListener('input', this.checkSignUpPasswords.bind(this))
         this.shadow.querySelector('#signUpBtn').addEventListener('click', this.actionSignUp.bind(this))
         this.shadow.querySelector('#signUpShowLoginForm').addEventListener('click', this.showView.bind(this, 'viewLoginForm', 'initial'))
-        this.shadow.querySelector('#tableBtnAdd').addEventListener('click', this.actionOpenAdd.bind(this))
+        this.shadow.querySelector('#tableBtnAddRow').addEventListener('click', this.actionOpenAddRow.bind(this))
         this.shadow.querySelector('#tableBtnGoBack').addEventListener('click', this.actionGoStart.bind(this))
         this.shadow.querySelector('#tableBtnLogOut').addEventListener('click', this.actionLogout.bind(this))
         this.shadow.querySelector('#tableBtnGoBack').addEventListener('click', this.actionGetTableList.bind(this, 'viewTable', 'initial'))
+        this.shadow.querySelector('#addRowBtnSave').addEventListener('click', this.actionSaveRow.bind(this))
 
         // Automàticament, validar l'usuari per 'token' (si n'hi ha)
         await this.actionCheckUserByToken()
@@ -73,6 +74,8 @@ class UserLogin extends HTMLElement {
         let refUserName = this.shadow.querySelector('#infoUser')
         let refLoading = this.shadow.querySelector('#infoLoading')
         let refButton = this.shadow.querySelector('#infoBtnLogOut')
+
+        console.log(refLoading)
 
 
         switch (status) {
@@ -170,6 +173,21 @@ class UserLogin extends HTMLElement {
                 loading.style.opacity = 0
         }
     }
+
+    setViewAddRowStatus(status) {
+        let addRowList = this.shadow.getElementById("addRowList")
+        let loading = this.shadow.getElementById("addRowLoading")
+
+        switch(status) {
+            case 'load':
+                loading.style.opacity = 0
+                this.actionOpenAddRow()
+            case 'loading':
+                loading.style.opacity = 1
+            case 'loaded':
+                loading.style.opacity = 0
+        }
+    }
     
 
     showView(viewName, viewStatus) {
@@ -178,6 +196,7 @@ class UserLogin extends HTMLElement {
         this.shadow.querySelector('#viewLoginForm').style.display = 'none'
         this.shadow.querySelector('#viewSignUpForm').style.display = 'none'
         this.shadow.querySelector('#viewTable').style.display = 'none'
+        this.shadow.querySelector('#viewAddRow').style.display = 'none'
 
         // Mostrar la vista seleccionada, amb l'status indicat
         switch (viewName) {
@@ -200,11 +219,17 @@ class UserLogin extends HTMLElement {
         case 'viewTable':
             this.shadow.querySelector('#viewTable').style.removeProperty('display')
             this.setViewTableStatus(viewStatus)
+            break
+        case 'viewAddRow':
+            this.shadow.querySelector('#viewAddRow').style.removeProperty('display')
+            this.setViewAddRowStatus(viewStatus)
         }
     }
 
     async actionGoStart() {
+        this.getTableListFlag = true;
         this.showView('viewInfo', 'logged')
+        this.setViewInfoStatus('logged')
     }
 
     async actionGetTableRows() {
@@ -236,22 +261,54 @@ class UserLogin extends HTMLElement {
         }
     }
 
-    async actionOpenAdd() {
+    async actionOpenAddRow() {
+        this.showView('viewAddRow', 'loading')
         let tokenValue = window.localStorage.getItem("token")
         if (tokenValue) {
             let requestData = {
-                callType: 'actionGetTableRows',
+                callType: 'actionGetTableCols',
                 table: this.selectedTable,
                 token: tokenValue
             }
             let resultData = await this.callServer(requestData)
-            let tableRows = this.shadow.getElementById("tableRows")
-            tableRows.innerHTML = ""
+            let addRowList = this.shadow.getElementById("addRowList")
+            addRowList.innerHTML = ""
             if (resultData.result == 'OK') {
                 for (let i = 0; i < resultData.tableRows.length; i++) {
-                    tableRows.innerHTML += `<li>ID: ${resultData.tableRows[i]}</li>`
+                    addRowList.innerHTML += `<li><label>${resultData.tableRows[i]} </label><input type="text" id="${resultData.tableRows[i]}"></li>`
                 }
-                this.setViewTableStatus('loaded')
+                this.showView('viewAddRow', 'loaded')
+            } else {
+                // Esborrar totes les dades del localStorage
+                this.setUserInfo('', '')
+                this.showView('viewLoginForm', 'initial')
+            }           
+        } else {
+            // No hi ha token de sessió, mostrem el 'loginForm'
+            this.setUserInfo('', '')
+            this.showView('viewLoginForm', 'initial')
+        }
+    }
+
+    async actionSaveRow() {
+        let data = []
+        let inputList = this.shadow.querySelectorAll("#addRowList li input")
+        console.log(inputList)
+        for (let i = 0; i < inputList.length; i++) {
+            data.push({field: inputList[i].id, value: inputList[i].value})
+        }
+        let tokenValue = window.localStorage.getItem("token")
+        if (tokenValue) {
+            let requestData = {
+                callType: 'actionAddRow',
+                table: this.selectedTable,
+                data: data,
+                token: tokenValue
+            }
+            let resultData = await this.callServer(requestData)
+            if (resultData.result == 'OK') {
+                console.log("SAVE COMPLETE")
+                this.showView("viewInfo", "logged")
             } else {
                 // Esborrar totes les dades del localStorage
                 this.setUserInfo('', '')
@@ -412,7 +469,8 @@ class UserLogin extends HTMLElement {
             // Mostrar el formulari de signUp 'inicial'
             this.showView('viewInfoForm', 'initial')
             */
-        }           
+        }
+        this.setViewInfoStatus('logged')      
     }
 
     async actionGetAllAreas() {
