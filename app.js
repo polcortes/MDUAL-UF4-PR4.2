@@ -83,14 +83,6 @@ async function getShadows (req, res) {
   res.setHeader('Content-Type', 'application/javascript');
   res.send(shadows.getShadows())
 }
-
-// Configurar direcció '/hola'
-app.get('/hola', hola);
-async function hola(req, res) {
-  let query = await db.query("SELECT * FROM Users");
-
-  res.send(query);
-}
   
 // Configurar la direcció '/ajaxCall'
 app.post('/ajaxCall', ajaxCall)
@@ -101,7 +93,7 @@ async function ajaxCall (req, res) {
   let result = ""
 
   // Simulate delay (1 second)
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  // await new Promise(resolve => setTimeout(resolve, 1000));
 
   // Processar la petició
   switch (objPost.callType) {
@@ -111,6 +103,7 @@ async function ajaxCall (req, res) {
       case 'actionSignUp':            result = await actionSignUp(objPost); break
       case 'actionGetTableList':      result = await actionGetTableList(objPost); break
       case 'actionGetTableRows':      result = await actionGetTableRows(objPost); break
+      case 'editTableRow':            result = await editTableRow(objPost); break
       case 'actionGetTableCols':      result = await actionGetTableCols(objPost); break
       case 'actionAddRow':            result = await actionAddRow(objPost); break
       default:
@@ -134,13 +127,41 @@ async function actionGetTableRows(objPost) {
   let token = objPost.token
   if (validateToken(token)) {
     console.log(objPost.table)
-    let query = await db.query(`SELECT * FROM ${objPost.table}`)
+    let query = await db.query(`SELECT * FROM ${objPost.table}`);
+    let columnNamesQuery = await db.query(`DESCRIBE ${objPost.table}`);
+    let columnNames = columnNamesQuery.map(column => column.Field)
     let tableRows = []
     for (let i = 0; i < query.length; i++) {
       tableRows.push(query[i].id)
     }
-    return {result: 'OK', tableRows: tableRows}
+    return {result: 'OK', columnNames: columnNames, tableRows: tableRows};
   }
+  return {result: 'KO'}
+}
+
+async function actionAddRow(objPost) {
+  let token = objPost.token
+  if (validateToken(token)) {
+    console.log(objPost.data)
+    let queryText = `INSERT INTO ${objPost.table} (`
+    for (let i = 0; i < objPost.data.length; i++) {
+      queryText += objPost.data[i].field
+      if (i != objPost.data.length - 1) {
+        queryText += ", "
+      }
+    }
+    queryText += ") VALUES ("
+    for (let i = 0; i < objPost.data.length; i++) {
+      queryText += "'" + objPost.data[i].value + "'"
+      if (i != objPost.data.length - 1) {
+        queryText += ", "
+      }
+    }
+    queryText += ")"
+    let query = await db.query(queryText)
+    return {result: 'OK'}
+  }
+  return {result: 'KO'}
 }
 
 async function actionGetTableCols(objPost) {
@@ -208,6 +229,10 @@ async function actionLogout (objPost) {
   } else {
       return {result: 'OK'}
   }
+}
+
+async function editTableRow(objPost) {
+  
 }
 
 async function actionLogin (objPost) {
