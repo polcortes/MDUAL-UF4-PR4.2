@@ -33,16 +33,16 @@ let users = [
 
 // Inicialitzar objecte de shadows
 let shadows = new shadowsObj()
-const ddbb = "pr42"
+const ddbb = "Pr42"
 
 // Crear i configurar l'objecte de la base de dades
 var db = new database();
 db.init({
   host: "localhost"/*'192.168.19.248'*/,  // ip portatil clase si estamos ahi
-  port: 3306/*5306*/,
+  port: 1234/*5306*/,
   user: "root",
-  password: "",
-  database: "pr42"
+  password: "pwd",
+  database: "Pr42"
 });
 
 // Publicar arxius carpeta ‘public’ 
@@ -93,7 +93,7 @@ async function ajaxCall(req, res) {
   let result = "";
 
   // Simulate delay (1 second)
-  // await new Promise(resolve => setTimeout(resolve, 1000));
+  await new Promise(resolve => setTimeout(resolve, 1000));
 
   // Processar la petició
   switch (objPost.callType) {
@@ -109,6 +109,7 @@ async function ajaxCall(req, res) {
       case 'actionDeleteRow':         result = await actionDeleteRow(objPost); break
       case 'actionCreateTable':       result = await actionCreateTable(objPost); break
       case 'actionDropTable':         result = await actionDropTable(objPost); break
+      case 'actionUpdateTable':       result = await actionUpdateTable(objPost); break
       default:
           result = { result: 'KO', message: 'Invalid callType' }
           break;
@@ -257,6 +258,21 @@ async function actionCreateTable(objPost) {
     }
     queryText += "PRIMARY KEY (`id`));"
     let query = await db.query(queryText);
+    return {result: 'OK'};
+  }
+  return {result: 'KO'}
+}
+
+async function actionUpdateTable(objPost) {
+  console.log(objPost.tableNameOld)
+  console.log(objPost.tableNameNew)
+  let token = objPost.token
+  if (validateToken(token)) {
+    if (objPost.tableNameOld != objPost.tableNameNew) {
+      let query = await db.query(`RENAME TABLE ${objPost.tableNameOld} TO \`${objPost.tableNameNew}\`;`);
+      await db.query('COMMIT;')
+      console.log("query", query)
+    }
     return {result: 'OK'};
   }
   return {result: 'KO'}

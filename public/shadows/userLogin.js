@@ -41,6 +41,8 @@ class UserLogin extends HTMLElement {
         this.shadow.querySelector('#signUpShowLoginForm').addEventListener('click', this.showView.bind(this, 'viewLoginForm', 'initial'))
         this.shadow.querySelector('#tableBtnAddRow').addEventListener('click', this.actionOpenAddRow.bind(this))
         this.shadow.querySelector('#tableBtnGoBack').addEventListener('click', this.actionGoStart.bind(this))
+        this.shadow.querySelector('#addTableBtnGoBack').addEventListener('click', this.actionGoStart.bind(this))
+        this.shadow.querySelector('#addRowBtnGoBack').addEventListener('click', this.actionGoStart.bind(this))
         this.shadow.querySelector('#tableBtnLogOut').addEventListener('click', this.actionLogout.bind(this))
         this.shadow.querySelector('#tableBtnGoBack').addEventListener('click', this.actionGetTableList.bind(this, 'viewTable', 'initial'))
         this.shadow.querySelectorAll('.tableRowEdit').forEach(el => el.addEventListener("change", this.editTableRow.bind(this)));
@@ -48,6 +50,7 @@ class UserLogin extends HTMLElement {
         this.shadow.querySelector('#infoBtnAddTable').addEventListener('click', this.actionOpenAddTable.bind(this))
         this.shadow.querySelector('#addTableBtnAddColumn').addEventListener('click', this.addTableColumn.bind(this))
         this.shadow.querySelector('#addTableBtnSave').addEventListener('click', this.actionSaveTable.bind(this))
+        this.shadow.querySelector('#addRowBtnSave').addEventListener('click', this.actionSaveRow.bind(this))
 
 
         // Automàticament, validar l'usuari per 'token' (si n'hi ha)
@@ -366,51 +369,30 @@ class UserLogin extends HTMLElement {
     }
 
     async actionDeleteRow(rowId) {
-        let tokenValue = window.localStorage.getItem("token")
-        if (tokenValue) {
-            let requestData = {
-                callType: 'actionDeleteRow',
-                table: this.selectedTable,
-                id: rowId,
-                token: tokenValue
-            }
-            let resultData = await this.callServer(requestData)
-            if (resultData.result == 'OK') {
-                this.actionGetTableRows();
+        if (confirm('Estàs segur de voler borrar aquesta fila?')) {
+            let tokenValue = window.localStorage.getItem("token")
+            if (tokenValue) {
+                let requestData = {
+                    callType: 'actionDeleteRow',
+                    table: this.selectedTable,
+                    id: rowId,
+                    token: tokenValue
+                }
+                let resultData = await this.callServer(requestData)
+                if (resultData.result == 'OK') {
+                    this.actionGetTableRows();
+                } else {
+                    // Esborrar totes les dades del localStorage
+                    this.setUserInfo('', '')
+                    this.showView('viewLoginForm', 'initial')
+                }           
             } else {
-                // Esborrar totes les dades del localStorage
+                // No hi ha token de sessió, mostrem el 'loginForm'
                 this.setUserInfo('', '')
                 this.showView('viewLoginForm', 'initial')
-            }           
-        } else {
-            // No hi ha token de sessió, mostrem el 'loginForm'
-            this.setUserInfo('', '')
-            this.showView('viewLoginForm', 'initial')
-        }
-    }
-
-    async actionDeleteRow(rowId) {
-        let tokenValue = window.localStorage.getItem("token")
-        if (tokenValue) {
-            let requestData = {
-                callType: 'actionDeleteRow',
-                table: this.selectedTable,
-                id: rowId,
-                token: tokenValue
             }
-            let resultData = await this.callServer(requestData)
-            if (resultData.result == 'OK') {
-                this.actionGetTableRows();
-            } else {
-                // Esborrar totes les dades del localStorage
-                this.setUserInfo('', '')
-                this.showView('viewLoginForm', 'initial')
-            }           
-        } else {
-            // No hi ha token de sessió, mostrem el 'loginForm'
-            this.setUserInfo('', '')
-            this.showView('viewLoginForm', 'initial')
         }
+        
     }
 
     
@@ -628,7 +610,7 @@ class UserLogin extends HTMLElement {
         if (resultData.result == 'OK') {
             tableList.innerHTML = "";
             for (let i = 0; i < resultData.tableList.length; i++) {
-                tableList.innerHTML += `<li><input class="tableName" value="${resultData.tableList[i]}"><button class="openTableButton" id="${resultData.tableList[i]}">Obrir taula</button><button class="deleteTableButton" id="${resultData.tableList[i]}">Eliminar taula</button></li>`
+                tableList.innerHTML += `<li><input class="tableName" id="tableName-${i}" value="${resultData.tableList[i]}"><button class="openTableButton" id="${resultData.tableList[i]}">Obrir taula</button><button class="deleteTableButton" id="${resultData.tableList[i]}">Eliminar taula</button></li>`
             }
 
             let tables = this.shadow.querySelectorAll(".openTableButton")
@@ -638,6 +620,16 @@ class UserLogin extends HTMLElement {
                     self.selectedTable = this.id
                     self.showView('viewTable', 'load')
                 })
+            }
+
+            let deleteTableListButtonList = this.shadow.querySelectorAll(".deleteTableButton")
+            for (let i = 0; i < deleteTableListButtonList.length; i++) {
+                deleteTableListButtonList[i].addEventListener("click", self.actionDropTable.bind(self, resultData.tableList[i],))
+            }
+
+            let inputList = this.shadow.querySelectorAll(".tableName")
+            for (let i = 0; i < inputList.length; i++) {
+                inputList[i].addEventListener("change", self.actionUpdateTable.bind(self, resultData.tableList[i], inputList[i].id, self))
             }
         } else {
             /*
@@ -653,6 +645,61 @@ class UserLogin extends HTMLElement {
             */
         }
         this.setViewInfoStatus('logged')      
+    }
+
+    async actionUpdateTable(tableNameOld, inputId, self) {
+            let inputList = this.shadow.querySelectorAll(".tableName")
+            for (let i = 0; i < inputList.length; i++) {
+                inputList[i].addEventListener("change", self.actionUpdateTable.bind(self, inputList[i].value, inputList[i].id, self))
+            }
+            let tableNameNew = this.shadow.getElementById(inputId).value
+            let tokenValue = window.localStorage.getItem("token")
+            if (tokenValue) {
+                let requestData = {
+                    callType: 'actionUpdateTable',
+                    tableNameOld: tableNameOld,
+                    tableNameNew: tableNameNew,
+                    token: tokenValue
+                }
+                let resultData = await this.callServer(requestData)
+                if (resultData.result == 'OK') {
+                    console.log("Done")
+                } else {
+                    // Esborrar totes les dades del localStorage
+                    this.setUserInfo('', '')
+                    this.showView('viewLoginForm', 'initial')
+                }           
+            } else {
+                // No hi ha token de sessió, mostrem el 'loginForm'
+                this.setUserInfo('', '')
+                this.showView('viewLoginForm', 'initial')
+            }
+        
+    }
+
+    async actionDropTable(tableName) {
+        if (confirm('Estàs segur de voler eliminar aquesta taula?')) {
+            let tokenValue = window.localStorage.getItem("token")
+            if (tokenValue) {
+                let requestData = {
+                    callType: 'actionDropTable',
+                    tableName: tableName,
+                    token: tokenValue
+                }
+                let resultData = await this.callServer(requestData)
+                if (resultData.result == 'OK') {
+                    this.actionGetTableList();
+                } else {
+                    // Esborrar totes les dades del localStorage
+                    this.setUserInfo('', '')
+                    this.showView('viewLoginForm', 'initial')
+                }           
+            } else {
+                // No hi ha token de sessió, mostrem el 'loginForm'
+                this.setUserInfo('', '')
+                this.showView('viewLoginForm', 'initial')
+            }
+        }
     }
 
     async actionGetAllAreas() {
